@@ -33,3 +33,13 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+processResources.dependsOn('copySecret')
+
+task copySecret(type: Copy) {
+    from './secure-submodule/application-dev.yml'
+    into './src/main/resources'
+
+    from './secure-submodule/application-prod.yml'
+    into './src/main/resources'
+}
