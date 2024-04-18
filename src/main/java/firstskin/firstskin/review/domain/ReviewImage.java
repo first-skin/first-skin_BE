@@ -10,7 +10,7 @@ public class ReviewImage {
     @Column(name = "review_image_id")
     private Long reviewImageId;
 
-    @Column(name = "review_id")
+    @JoinColumn(name = "review_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Review review;
 
