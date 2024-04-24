@@ -6,7 +6,6 @@ spring:
   output:
     ansi:
       enabled: always
-
     jpa:
       open-in-view: true
       hibernate:
