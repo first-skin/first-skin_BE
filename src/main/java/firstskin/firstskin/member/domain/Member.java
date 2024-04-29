@@ -2,8 +2,11 @@ package firstskin.firstskin.member.domain;
 
 import firstskin.firstskin.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
+@Getter
+@NoArgsConstructor
 public class Member extends BaseTimeEntity {
 
     @Id
@@ -25,4 +28,12 @@ public class Member extends BaseTimeEntity {
     private String profileUrl;
 
     private boolean activated;
+
+
+    public Member(Role role, String profileImageUrl, String userId, String nickname) {
+        this.role = role;
+        this.profileUrl = profileImageUrl;
+        this.userId = userId;
+        this.nickname = nickname;
+    }
 }
