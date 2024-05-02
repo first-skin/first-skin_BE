@@ -38,6 +38,10 @@ public class Member extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    public void delete() {
+        this.activated = false;
+    }
+
     @PrePersist
     public void prePersist() {
         this.activated = true;

@@ -27,6 +27,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         List<MemberResponse> fetch = queryFactory
                 .select(Projections.constructor(
                         MemberResponse.class,
+                        member.memberId.as("memberId"),
                         member.userId.as("userId"),
                         member.profileUrl.as("profile"),
                         member.createdDate.as("createdDate"),

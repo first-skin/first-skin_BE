@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @ToString
 public class MemberResponse {
 
+    private final Long memberId;
     private final String userId;
     private final String profile;
     private final LocalDateTime createdDate;
@@ -17,7 +18,8 @@ public class MemberResponse {
     private final String trouble;
     private final String personalColor;
 
-    public MemberResponse(String userId, String profile, LocalDateTime createdDate, String nickname, String type, String trouble, String personalColor) {
+    public MemberResponse(Long memberId, String userId, String profile, LocalDateTime createdDate, String nickname, String type, String trouble, String personalColor) {
+        this.memberId = memberId;
         this.userId = userId;
         this.profile = profile;
         this.createdDate = createdDate;
