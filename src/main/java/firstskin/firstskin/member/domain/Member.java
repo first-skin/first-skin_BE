@@ -2,7 +2,8 @@ package firstskin.firstskin.member.domain;
 
 import firstskin.firstskin.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -35,5 +36,14 @@ public class Member extends BaseTimeEntity {
         this.profileUrl = profileImageUrl;
         this.userId = userId;
         this.nickname = nickname;
+    }
+
+    public void delete() {
+        this.activated = false;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.activated = true;
     }
 }

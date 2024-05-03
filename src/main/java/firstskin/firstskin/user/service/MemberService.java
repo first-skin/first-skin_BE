@@ -2,16 +2,13 @@ package firstskin.firstskin.user.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import firstskin.firstskin.category.domain.Category;
 import firstskin.firstskin.member.domain.Member;
-import firstskin.firstskin.member.domain.Role;
 import firstskin.firstskin.member.repository.MemberRepository;
 import firstskin.firstskin.model.KakaoProfile;
 import firstskin.firstskin.model.OauthToken;
 import firstskin.firstskin.user.api.dto.MemberDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,8 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static firstskin.firstskin.member.domain.Role.ROLE_USER;
 
 @Service
 public class MemberService {

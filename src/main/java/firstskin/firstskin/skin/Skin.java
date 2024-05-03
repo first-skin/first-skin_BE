@@ -16,4 +16,9 @@ public class Skin {
     private Kind kind;
 
     private String result;
+
+    public Skin(Kind kind, String result) {
+        this.kind = kind;
+        this.result = result;
+    }
 }

@@ -4,8 +4,12 @@ import firstskin.firstskin.common.entity.BaseTimeEntity;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.skin.Skin;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Diagnosis extends BaseTimeEntity {
 
     @Id
@@ -23,4 +27,11 @@ public class Diagnosis extends BaseTimeEntity {
 
     @Column(name = "skin_picture_url")
     private String skinPictureUrl;
+
+    @Builder
+    public Diagnosis(Member member, Skin skin, String skinPictureUrl) {
+        this.member = member;
+        this.skin = skin;
+        this.skinPictureUrl = skinPictureUrl;
+    }
 }
