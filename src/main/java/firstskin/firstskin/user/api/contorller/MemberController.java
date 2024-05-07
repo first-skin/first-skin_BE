@@ -30,7 +30,8 @@ public class MemberController {
         OauthToken oauthToken = memberService.requestToken(code);
         KakaoProfile kakaoProfile = memberService.requestKakaoProfile(oauthToken);
 
-        Member existingMember = memberService.findMemberById(kakaoProfile.getId().toString());
+        Member existingMember = memberService.findMemberById(kakaoProfile.getId())
+                .orElseThrow(IllegalArgumentException::new);
 
         if (existingMember != null) {
             memberService.sessionSave(httpServletRequest, existingMember, oauthToken);

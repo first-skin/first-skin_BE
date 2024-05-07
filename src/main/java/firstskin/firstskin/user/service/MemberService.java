@@ -37,10 +37,8 @@ public class MemberService {
     }
 
 
-    public Member findMemberById(String userId) {
-        Optional<Member> findMember = Optional.ofNullable(memberRepository.findByUserId(userId));
-
-        return findMember.orElse(null);
+    public Optional<Member> findMemberById(Long memberId) {
+        return memberRepository.findById(memberId);
     }
 
     public void addMember(Member member) {
