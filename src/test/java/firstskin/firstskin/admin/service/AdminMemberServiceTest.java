@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +38,7 @@ class AdminMemberServiceTest {
 
     @Test
     @DisplayName("회원 목록 조회시 퍼스널컬러, 타입, 트러블 결과도 함께 조회된다")
+    @Transactional
     public void getMembers() throws Exception{
         //given
         Member member1 = new Member(Role.ROLE_USER, "프로필사진1", "아이디1", "닉네임1");
@@ -85,19 +89,21 @@ class AdminMemberServiceTest {
 
     @Test
     @DisplayName("회원 비활성화시 activated가 false로 변경된다.")
+    @Transactional
     public void inactiveMember() throws Exception{
         //given
-        Member member = new Member(Role.ROLE_USER, "프로필사진1", "아이디1", "닉네임1");
-        memberRepository.save(member);
+        String uuid = UUID.randomUUID().toString();
+        Member member = new Member(Role.ROLE_USER, "프로필사진1", uuid, "닉네임1");
+        Member savedMember = memberRepository.save(member);
 
         //when
 
         //전
-        Member byUserId1 = memberRepository.findByUserId(member.getUserId());
+        Member byUserId1 = memberRepository.findByUserId(savedMember.getUserId());
         assertThat(byUserId1.isActivated()).isTrue();
 
-        adminMemberService.inactiveMember(member.getMemberId());
-        Member byUserId = memberRepository.findByUserId(member.getUserId());
+        adminMemberService.inactiveMember(savedMember.getMemberId());
+        Member byUserId = memberRepository.findByUserId(savedMember.getUserId());
 
         //then
         assertThat(byUserId.isActivated()).isFalse();
