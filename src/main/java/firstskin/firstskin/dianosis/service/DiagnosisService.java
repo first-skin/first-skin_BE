@@ -36,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DiagnosisService {
 
-    private final String[] labels = {"dry", "normal", "oily"};
+    private final String[] typeLabels = {"dry", "normal", "oily"};
 
     private final DiagnosisRepository diagnosisRepository;
     private final MemberRepository memberRepository;
@@ -82,7 +82,7 @@ public class DiagnosisService {
             floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
 
             int maxIndex = argMax(resultArray);
-            resultLabel = labels[maxIndex];
+            resultLabel = typeLabels[maxIndex];
 
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단

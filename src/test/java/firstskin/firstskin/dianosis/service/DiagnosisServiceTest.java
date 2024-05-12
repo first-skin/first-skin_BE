@@ -20,6 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
 class DiagnosisServiceTest {
 
@@ -46,7 +48,7 @@ class DiagnosisServiceTest {
         Member savedMember1 = memberRepository.save(member1);
         Member savedMember2 = memberRepository.save(member2);
 
-        Path drypath = Paths.get("src/main/resources/test/dry1.png");
+        Path drypath = Paths.get("src/main/resources/test/dry.png");
         Path oilypath = Paths.get("src/main/resources/test/oily.png");
         byte[] dryContent = Files.readAllBytes(drypath);
         byte[] oilyContent = Files.readAllBytes(oilypath);
@@ -71,12 +73,14 @@ class DiagnosisServiceTest {
 
         //when
         DiagnosisResponse response = diagnosisService.diagnosisSkin(dryRequest);
-        System.out.println("dryResponse = " + response.getResult());
 
         DiagnosisResponse response2 = diagnosisService.diagnosisSkin(oilyRequest);
-        System.out.println("oilyResponse2 = " + response2.getResult());
 
         //then
+        assertThat(response.getResult()).isEqualTo("dry");
+        assertThat(response2.getResult()).isEqualTo("oily");
+        assertThat(response.getResult()).isNotEqualTo(response2.getResult());
+        assertThat(response.getResult()).isNotEqualTo("normal");
 
     }
 
