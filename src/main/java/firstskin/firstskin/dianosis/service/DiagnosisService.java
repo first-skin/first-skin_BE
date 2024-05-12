@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -83,7 +84,7 @@ public class DiagnosisService {
             int maxIndex = argMax(resultArray);
             resultLabel = labels[maxIndex];
 
-        }else if (request.getKind().equals(Kind.TROUBLE)) {
+        } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
             return null;
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
@@ -110,6 +111,33 @@ public class DiagnosisService {
         return new DiagnosisResponse(resultLabel);
     }
 
+    private String saveFile(DiagnosisDto request) {
+
+        if (request.getFile().isEmpty()) {
+            throw new IllegalStateException("업로드된 파일이 없습니다.");
+        }
+
+        // 이미지 파일이 아닐 경우 예외
+        if (!Objects.requireNonNull(request.getFile().getContentType()).startsWith("image")) {
+            throw new IllegalStateException("이미지 파일이 아닙니다. contentType: " + request.getFile().getContentType());
+        }
+
+        MultipartFile file = request.getFile();
+        String originalFilename = file.getOriginalFilename();
+
+        // 달 별로 폴더 없으면 새로 생성
+        Path path = getPath();
+        createDirIfNotExist(path);
+
+        String modifiedFilename = UUID.randomUUID() + originalFilename;
+        Path uploadPath = Paths.get(path.toString(), modifiedFilename);
+
+        // 416 * 416 이미지로 변환 및 저장
+        changImageSize(file, uploadPath);
+
+        return uploadPath.toString();
+    }
+
     private int argMax(float[] array) {
         int maxIndex = 0;
         for (int i = 1; i < array.length; i++) {
@@ -120,6 +148,7 @@ public class DiagnosisService {
         return maxIndex;
     }
     // 이미지 전처리
+
     private TFloat32 preprocessImage(BufferedImage img) {
         int width = 224;
         int height = 224;
@@ -182,29 +211,6 @@ public class DiagnosisService {
         return TFloat32.tensorOf(StdArrays.ndCopyOf(imageArray));
     }
 
-
-
-    private String saveFile(DiagnosisDto request) {
-
-        if (request.getFile().isEmpty()) {
-            throw new IllegalStateException("Cannot upload empty file");
-        }
-
-        MultipartFile file = request.getFile();
-        String originalFilename = file.getOriginalFilename();
-
-        // 달 별로 폴더 없으면 새로 생성
-        Path path = getPath();
-        createDirIfNotExist(path);
-
-        String modifiedFilename = UUID.randomUUID() + originalFilename;
-        Path uploadPath = Paths.get(path.toString(), modifiedFilename);
-
-        // 416 * 416 이미지로 변환 및 저장
-        changImageSize(file, uploadPath);
-
-        return uploadPath.toString();
-    }
 
     private Path getPath() {
         LocalDate now = LocalDate.now();
