@@ -41,12 +41,12 @@ public class CosmeticService {
         JsonNode jsonNode = objectMapper.readTree(exchange.getBody());
         JsonNode items = jsonNode.path("items");
 
-        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<List<CosmeticResponse>>() {
+        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
         });
 
         CosmeticPageResponse response = CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
-                .size(request.getSize())
+                .size(request.getSize() == null ? 10 : request.getSize())
                 .start(jsonNode.path("start").asInt())
                 .display(jsonNode.path("display").asInt())
                 .content(cosmeticResponses)
@@ -64,12 +64,12 @@ public class CosmeticService {
     }
 
     private URI getUri(CosmeticRequest request) {
-        
+
         return UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("query", request.getQuery())
-                .queryParam("display", request.getSize())
-                .queryParam("start", request.getStart())
-                .queryParam("sort", request.getSort())
+                .queryParam("display", request.getSize() == null ? 10 : request.getSize())
+                .queryParam("start", request.getStart() == null ? 1 : request.getStart())
+                .queryParam("sort", request.getSort() == null ? "sim" : request.getSort())
                 .build().encode().toUri();
     }
 

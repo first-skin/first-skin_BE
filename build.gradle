@@ -45,6 +45,10 @@ dependencies {
     // Appache Commons CSV
     implementation 'org.apache.commons:commons-csv:1.11.0'
 
+    // swagger
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.2.0'
+
+
 }
 
 tasks.named('test') {

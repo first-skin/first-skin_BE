@@ -37,7 +37,7 @@ class CosmeticControllerTest {
 
         //expected
 
-        mockMvc.perform(get("/cosmetics")
+        mockMvc.perform(get("/api/cosmetics")
                         .param("kind", "TYPE")
                         .param("category", "스킨/케어")
                         .param("query", "수분")

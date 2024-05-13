@@ -21,10 +21,12 @@ public class CosmeticPageResponse {
     private int size;
     private int display;
 
+    private String brand;
+
     private List<CosmeticResponse> content;
 
     @Builder
-    public CosmeticPageResponse(long total, int size, int start, int display, List<CosmeticResponse> content) {
+    public CosmeticPageResponse(long total, int size, int start, int display, List<CosmeticResponse> content, String brand) {
         this.last = ((start + display) >= total) || start == 100;
         this.totalPages = (int) Math.ceil((double) total / display);
         this.number = start / display;
