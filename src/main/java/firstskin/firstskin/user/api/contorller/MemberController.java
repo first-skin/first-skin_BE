@@ -19,6 +19,7 @@ import static firstskin.firstskin.member.domain.Role.ROLE_USER;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class MemberController {
 
     final private MemberService memberService;

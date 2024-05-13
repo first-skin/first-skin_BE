@@ -13,7 +13,7 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/skin/diagnosis")
+@RequestMapping("/api/skin/diagnosis")
 public class DiagnosisController {
 
     private final DiagnosisService diagnosisService;
