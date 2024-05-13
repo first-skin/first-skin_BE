@@ -12,6 +12,8 @@ import firstskin.firstskin.skin.repository.SkinRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,10 +26,12 @@ import org.tensorflow.types.TFloat32;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -84,6 +88,8 @@ public class DiagnosisService {
 
             int maxIndex = argMax(resultArray);
             resultLabel = typeLabels[maxIndex];
+
+            updateTypeCsvFile(maxIndex, filePath);
 
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
@@ -241,5 +247,28 @@ public class DiagnosisService {
         } catch (IOException e) {
             throw new IllegalStateException("Cannot save file", e);
         }
+    }
+
+    private void updateTypeCsvFile(int labelIndex, String filePath) {
+        Path csvFile = getTypeCsvFilePath();
+
+        boolean fileAlreadyExists = Files.exists(csvFile);
+
+        CSVFormat format = fileAlreadyExists ?
+                CSVFormat.DEFAULT :
+                CSVFormat.DEFAULT.builder().setHeader("labelIndex", "FilePath").build();
+
+        try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+             CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
+            csvPrinter.printRecord(labelIndex, filePath);
+            csvPrinter.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("csv 저장 실패");
+        }
+
+    }
+
+    private Path getTypeCsvFilePath() {
+        return Paths.get(uploadDir, "diagnosis_type.csv");
     }
 }

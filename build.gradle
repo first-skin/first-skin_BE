@@ -42,6 +42,9 @@ dependencies {
     //thumnailator
     implementation 'net.coobird:thumbnailator:0.4.20'
 
+    // Appache Commons CSV
+    implementation 'org.apache.commons:commons-csv:1.11.0'
+
 }
 
 tasks.named('test') {
