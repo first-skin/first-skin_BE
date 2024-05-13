@@ -29,7 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -96,7 +97,7 @@ public class DiagnosisService {
 
         // DB에 저장
         Member findMember = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new IllegalStateException(request.getMemberId() + " is not found"));
+                .orElseThrow(() -> new IllegalStateException(request.getMemberId() + " 회원을 찾을 수 없음"));
 
         Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(resultLabel + " is not found"));
 
@@ -118,8 +119,9 @@ public class DiagnosisService {
         }
 
         // 이미지 파일이 아닐 경우 예외
-        if (!Objects.requireNonNull(request.getFile().getContentType()).startsWith("image")) {
-            throw new IllegalStateException("이미지 파일이 아닙니다. contentType: " + request.getFile().getContentType());
+        List<String> allowedContentType = Arrays.asList("image/png", "image/jpeg", "image/jpg");
+        if (!allowedContentType.contains(request.getFile().getContentType())) {
+            throw new IllegalStateException("PNG, JPEG, JPG 파일만 업로드 가능합니다.");
         }
 
         MultipartFile file = request.getFile();

@@ -37,6 +37,7 @@ class DiagnosisServiceTest {
     @Test
     @DisplayName("피부 타입 진단 테스트를 실행하면 진단 결과가 반환된다")
     @Transactional
+//    @Rollback(value = false)
     public void diagnosisType() throws Exception{
         //given
         String uuid1 = UUID.randomUUID().toString();
@@ -52,8 +53,8 @@ class DiagnosisServiceTest {
         Path oilypath = Paths.get("src/main/resources/test/oily.png");
         byte[] dryContent = Files.readAllBytes(drypath);
         byte[] oilyContent = Files.readAllBytes(oilypath);
-        MockMultipartFile img = new MockMultipartFile("file", drypath.getFileName().toString(), "image", dryContent);
-        MockMultipartFile img2 = new MockMultipartFile("file", oilypath.getFileName().toString(), "image", oilyContent);
+        MockMultipartFile img = new MockMultipartFile("file", drypath.getFileName().toString(), "image/png", dryContent);
+        MockMultipartFile img2 = new MockMultipartFile("file", oilypath.getFileName().toString(), "image/png", oilyContent);
 
         DiagnosisDto dryRequest = new DiagnosisDto(savedMember1.getMemberId(), Kind.TYPE, img);
         DiagnosisDto oilyRequest = new DiagnosisDto(savedMember2.getMemberId(), Kind.TYPE, img2);
