@@ -36,7 +36,7 @@ class CategoryControllerTest {
         categoryRepository.save(new Category("립"));
 
         //expected
-        mockMvc.perform(get("/admin/category")
+        mockMvc.perform(get("/api/admin/category")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(print());
@@ -51,7 +51,7 @@ class CategoryControllerTest {
         String category = "선크림";
 
         //expected
-        mockMvc.perform(get("/admin/category")
+        mockMvc.perform(get("/api/admin/category")
                         .param("category", category)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -67,7 +67,7 @@ class CategoryControllerTest {
         categoryRepository.save(category);
 
         //expected
-        mockMvc.perform(get("/admin/category")
+        mockMvc.perform(get("/api/admin/category")
                         .param("categoryId", String.valueOf(category.getCategoryId()))
                         .param("category", "선크림")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -81,13 +81,13 @@ class CategoryControllerTest {
         //given
         Category category = new Category("스킨/로션");
         categoryRepository.save(category);
-        mockMvc.perform(get("/admin/category")
+        mockMvc.perform(get("/api/admin/category")
                         .param("categoryId", String.valueOf(category.getCategoryId()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(print());
         //expected
-        mockMvc.perform(delete("/admin/category/{categoryId}", category.getCategoryId())
+        mockMvc.perform(delete("/api/admin/category/{categoryId}", category.getCategoryId())
                         .param("categoryId", String.valueOf(category.getCategoryId()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cosmetics")
+@RequestMapping("/api/cosmetics")
 public class CosmeticController {
 
     private final CosmeticService cosmeticService;

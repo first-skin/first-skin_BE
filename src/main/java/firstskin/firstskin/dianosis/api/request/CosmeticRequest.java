@@ -15,9 +15,10 @@ public class CosmeticRequest {
 
     @Builder
     public CosmeticRequest(Kind kind, String category, String query, Integer page, Integer size, String sort) {
+        size = size == null ? 10 : size;
         this.query = kind.getDescription() + ":" + query + "%20" + category;
         this.size = size;
         this.sort = sort;
-        this.start = (page - 1) * size + 1;
+        this.start = Math.max((page == null ? 1 : page - 1) * size + 1, 1);
     }
 }

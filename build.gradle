@@ -34,6 +34,21 @@ dependencies {
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    //tensorflow
+    implementation 'org.tensorflow:tensorflow-core-platform:1.0.0-rc.1'
+    implementation 'org.tensorflow:tensorflow-core-api:1.0.0-rc.1'
+
+    //thumnailator
+    implementation 'net.coobird:thumbnailator:0.4.20'
+
+    // Appache Commons CSV
+    implementation 'org.apache.commons:commons-csv:1.11.0'
+
+    // swagger
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.2.0'
+
+
 }
 
 tasks.named('test') {
