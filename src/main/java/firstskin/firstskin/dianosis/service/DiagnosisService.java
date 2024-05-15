@@ -42,6 +42,7 @@ import java.util.UUID;
 public class DiagnosisService {
 
     private final String[] typeLabels = {"dry", "normal", "oily"};
+    private final String[] troubleLabels = {"normal", "trouble"};
 
     private final DiagnosisRepository diagnosisRepository;
     private final MemberRepository memberRepository;
@@ -53,11 +54,24 @@ public class DiagnosisService {
     @Value("${model.type}")
     private String typeModelPath;
 
+    @Value("${model.trouble}")
+    private String troubleModelPath;
+
+    @Value("${model.detect_trouble}")
+    private String detectTroubleModelPath;
+
+    @Value("${model.detect_trouble_h5}")
+    private String detectTroubleH5ModelPath;
+
     private SavedModelBundle typeModel;
+    private SavedModelBundle troubleModel;
+    private SavedModelBundle detectTroubleModel;
 
     @PostConstruct
     public void init() {
         typeModel = SavedModelBundle.load(typeModelPath, "serve");
+        troubleModel = SavedModelBundle.load(troubleModelPath, "serve");
+        detectTroubleModel = SavedModelBundle.load(detectTroubleModelPath, "serve");
     }
 
 
@@ -93,19 +107,63 @@ public class DiagnosisService {
 
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
-            return null;
+            result = (TFloat32) troubleModel.session().runner()
+                    .feed("serving_default_input_6", preprocessedImage)
+                    .fetch("StatefulPartitionedCall:0")
+                    .run().get(0);
+
+            FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
+            result.copyTo(floatNdArray);
+            float[] resultArray = new float[2];
+            floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+
+            int maxIndex = argMax(resultArray);
+            resultLabel = troubleLabels[maxIndex];
+
+            if (resultLabel.equals("trouble")) {
+                // 트러블이면 여드름/홍조 구분
+                TFloat32 troubleResultDetail = (TFloat32) detectTroubleModel.session().runner()
+                        .feed("serving_default_input_6", preprocessedImage)
+                        .fetch("StatefulPartitionedCall:1")
+                        .run().get(0);
+
+                FloatNdArray troubleDetailFloatNdArray = NdArrays.ofFloats(troubleResultDetail.shape());
+                troubleResultDetail.copyTo(troubleDetailFloatNdArray);
+                float[] troubleDetailResultArray = new float[2];
+                troubleDetailFloatNdArray.scalars().forEachIndexed((idx, flt) -> troubleDetailResultArray[(int) idx[1]] = flt.getFloat());
+
+                int detectTroubleMaxIndex = argMax(troubleDetailResultArray);
+                resultLabel = detectTroubleMaxIndex == 0 ? "acne" : "redness";
+
+                // 트러블 위치 진단
+                TFloat32 detectTroubleResult = (TFloat32) detectTroubleModel.session().runner()
+                        .feed("serving_default_input_6", preprocessedImage)
+                        .fetch("StatefulPartitionedCall:0")
+                        .run().get(0);
+
+                FloatNdArray detectTroubleFloatNdArray = NdArrays.ofFloats(detectTroubleResult.shape());
+                detectTroubleResult.copyTo(detectTroubleFloatNdArray);
+                float[] detectTroubleResultArray = new float[4];
+                detectTroubleFloatNdArray.scalars().forEachIndexed((idx, flt) -> detectTroubleResultArray[(int) idx[1]] = flt.getFloat());
+
+//                filePath = runPythonScript(filePath, detectTroubleH5ModelPath);
+            }
+
+            updateTroubleCsvFile(maxIndex, filePath);
+
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
             // 퍼스널 컬러 진단
-            return null;
+            throw new IllegalStateException("퍼스널 컬러 진단은 준비 중입니다.");
         } else {
-            throw new IllegalStateException("Invalid kind");
+            throw new IllegalStateException("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
         }
 
         // DB에 저장
         Member findMember = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new IllegalStateException(request.getMemberId() + " 회원을 찾을 수 없음"));
 
-        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(resultLabel + " is not found"));
+        String finalResultLabel = resultLabel;
+        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(finalResultLabel + " is not found"));
 
         Diagnosis diagnosisResult = Diagnosis.builder()
                 .member(findMember)
@@ -134,7 +192,7 @@ public class DiagnosisService {
         String originalFilename = file.getOriginalFilename();
 
         // 달 별로 폴더 없으면 새로 생성
-        Path path = getPath();
+        Path path = getPath(request.getKind());
         createDirIfNotExist(path);
 
         String modifiedFilename = UUID.randomUUID() + originalFilename;
@@ -220,13 +278,19 @@ public class DiagnosisService {
     }
 
 
-    private Path getPath() {
+    private Path getPath(Kind kind) {
         LocalDate now = LocalDate.now();
         String year = String.valueOf(now.getYear());
         String month = String.format("%02d", now.getMonthValue());
         String day = String.format("%02d", now.getDayOfMonth());
 
-        return Paths.get(uploadDir, year, month, day);
+        if (kind.equals(Kind.TYPE)) {
+            return Paths.get(uploadDir, "skintype", "customers", year, month, day);
+        } else if (kind.equals(Kind.TROUBLE)) {
+            return Paths.get(uploadDir, "skintrouble", "customers", year, month, day);
+        } else {
+            throw new IllegalStateException("TROUBLE, TYPE 중 하나를 선택해주세요.");
+        }
     }
 
     private static void createDirIfNotExist(Path path) {
@@ -252,23 +316,108 @@ public class DiagnosisService {
     private void updateTypeCsvFile(int labelIndex, String filePath) {
         Path csvFile = getTypeCsvFilePath();
 
+        isAlreadyExist(labelIndex, filePath, csvFile);
+
+    }
+
+    private void updateTroubleCsvFile(int labelIndex, String filePath) {
+        Path csvFile = getTroubleCsvFilePath();
+
+        isAlreadyExist(labelIndex, filePath, csvFile);
+
+    }
+
+    private void isAlreadyExist(int labelIndex, String filePath, Path csvFile) {
         boolean fileAlreadyExists = Files.exists(csvFile);
 
         CSVFormat format = fileAlreadyExists ?
                 CSVFormat.DEFAULT :
-                CSVFormat.DEFAULT.builder().setHeader("labelIndex", "FilePath").build();
+                CSVFormat.DEFAULT.builder().build();
 
         try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
-            csvPrinter.printRecord(labelIndex, filePath);
+            csvPrinter.printRecord(filePath, labelIndex);
             csvPrinter.flush();
         } catch (IOException e) {
             throw new RuntimeException("csv 저장 실패");
         }
-
     }
 
     private Path getTypeCsvFilePath() {
-        return Paths.get(uploadDir, "diagnosis_type.csv");
+        // 폴더가 존재하지 않으면 생성
+        typeMakeDirIfNotExist();
+
+        return Paths.get(uploadDir, "skintype/skintype_df.csv");
     }
+
+    private Path getTroubleCsvFilePath() {
+        // 폴더가 존재하지 않으면 생성
+        troubleMakeDirIfNotExist();
+
+        return Paths.get(uploadDir, "skintrouble/skintrouble_df.csv");
+    }
+
+    private void typeMakeDirIfNotExist() {
+        Path path = Paths.get(uploadDir, "skintype");
+        createDirIfNotExist(path);
+    }
+
+    private void troubleMakeDirIfNotExist() {
+        Path path = Paths.get(uploadDir, "skintrouble");
+        createDirIfNotExist(path);
+    }
+
+//    // 파이썬 스크립트 실행
+//    private String runPythonScript(String imagePath, String modelPath) {
+//        String path = uploadDir + "detect_trouble/";
+//        String pythonScriptPath = path + "detect_trouble.py";
+//        String outputImagePath = generateOutputImagePath(imagePath);
+//        StringBuilder result = new StringBuilder();
+//
+//        try {
+//            // 가상 환경 경로 설정
+//            String venvPath = "/Users/wonu/Desktop/t24122/myenv";  // Linux/MacOS
+//
+//            // 가상 환경을 활성화하고 Python 스크립트를 실행하는 명령어
+//            String[] command = {
+//                    "/bin/bash", "-c",
+//                    "source " + venvPath + "/bin/activate && python " + pythonScriptPath + " " + imagePath + " " + modelPath + " " + outputImagePath
+//            };
+//
+//            // ProcessBuilder를 사용하여 명령어 실행
+//            ProcessBuilder processBuilder = new ProcessBuilder(command);
+//            processBuilder.redirectErrorStream(true);
+//            Process process = processBuilder.start();
+//
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                result.append(line).append("\n");
+//            }
+//
+//            int exitCode = process.waitFor();
+//            result.append("Exited with code: ").append(exitCode);
+//
+//            if (exitCode != 0) {
+//                System.err.println(result.toString());  // 에러 메시지 출력
+//                throw new RuntimeException("Python script execution failed with exit code " + exitCode);
+//            }
+//
+//        } catch (IOException | InterruptedException e) {
+//            throw new RuntimeException("Failed to run Python script", e);
+//        }
+//
+//
+//        return outputImagePath;
+//    }
+//
+//    private String generateOutputImagePath(String imagePath) {
+//        int dotIndex = imagePath.lastIndexOf('.');
+//        if (dotIndex == -1) {
+//            throw new IllegalArgumentException("Invalid image file path: " + imagePath);
+//        }
+//        String base = imagePath.substring(0, dotIndex);
+//        String extension = imagePath.substring(dotIndex);
+//        return base + "_detected" + extension;
+//    }
 }
