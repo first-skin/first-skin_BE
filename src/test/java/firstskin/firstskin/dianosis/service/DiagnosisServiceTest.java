@@ -85,4 +85,58 @@ class DiagnosisServiceTest {
 
     }
 
+    @Test
+    @DisplayName("피부 트러블 진단 테스트를 실행하면 진단 결과가 반환된다")
+    @Transactional
+//    @Rollback(value = false)
+    public void diagnosisTrouble() throws Exception{
+        //given
+        String uuid1 = UUID.randomUUID().toString();
+        String uuid2 = UUID.randomUUID().toString();
+
+        Member member1 = new Member(Role.ROLE_USER, "prf1", uuid1, "member1Nick");
+        Member member2 = new Member(Role.ROLE_USER, "prf2", uuid2, "member2Nick");
+
+        Member savedMember1 = memberRepository.save(member1);
+        Member savedMember2 = memberRepository.save(member2);
+
+        Path drypath = Paths.get("src/main/resources/test/dry.png");
+        Path oilypath = Paths.get("src/main/resources/test/trouble.png");
+        byte[] dryContent = Files.readAllBytes(drypath);
+        byte[] oilyContent = Files.readAllBytes(oilypath);
+        MockMultipartFile img = new MockMultipartFile("file", drypath.getFileName().toString(), "image/png", dryContent);
+        MockMultipartFile img2 = new MockMultipartFile("file", oilypath.getFileName().toString(), "image/png", oilyContent);
+
+        DiagnosisDto normalRequest = new DiagnosisDto(savedMember1.getMemberId(), Kind.TROUBLE, img);
+        DiagnosisDto troubleRequest = new DiagnosisDto(savedMember2.getMemberId(), Kind.TROUBLE, img2);
+
+        Skin normal = new Skin(Kind.TROUBLE, "normal");
+        Skin trouble = new Skin(Kind.TROUBLE, "trouble");
+        Skin acne = new Skin(Kind.TROUBLE, "acne");
+        Skin redness = new Skin(Kind.TROUBLE, "redness");
+        if (skinRepository.findByResult("normal").isEmpty()) {
+            skinRepository.save(normal);
+        }
+        if (skinRepository.findByResult("trouble").isEmpty()) {
+            skinRepository.save(trouble);
+        }
+        if (skinRepository.findByResult("redness").isEmpty()) {
+            skinRepository.save(redness);
+        }
+        if (skinRepository.findByResult("acne").isEmpty()) {
+            skinRepository.save(acne);
+        }
+
+        //when
+        DiagnosisResponse response = diagnosisService.diagnosisSkin(normalRequest);
+
+        DiagnosisResponse response2 = diagnosisService.diagnosisSkin(troubleRequest);
+
+        //then
+        assertThat(response.getResult()).isEqualTo("normal");
+        assertThat(response2.getResult()).isEqualTo("redness");
+        assertThat(response.getResult()).isNotEqualTo(response2.getResult());
+        assertThat(response.getResult()).isNotEqualTo("acne");
+
+    }
 }
