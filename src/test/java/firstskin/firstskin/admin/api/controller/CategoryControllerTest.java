@@ -77,6 +77,7 @@ class CategoryControllerTest {
 
     @Test
     @DisplayName("카테고리 삭제 테스트")
+    @Transactional
     public void deleteCategory() throws Exception{
         //given
         Category category = new Category("스킨/로션");

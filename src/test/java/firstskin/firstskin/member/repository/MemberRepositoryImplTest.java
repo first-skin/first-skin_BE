@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class MemberRepositoryImplTest {
@@ -33,6 +34,7 @@ class MemberRepositoryImplTest {
 
     @Test
     @DisplayName("회원 목록 조회시 퍼스널컬러, 타입, 트러블 결과도 함께 조회된다")
+    @Transactional
     public void getMembers() throws Exception {
         //given
         Member member1 = new Member(Role.ROLE_USER, "프로필사진1", "아이디1", "닉네임1");

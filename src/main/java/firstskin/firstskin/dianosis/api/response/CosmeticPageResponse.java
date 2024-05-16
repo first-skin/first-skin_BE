@@ -28,8 +28,16 @@ public class CosmeticPageResponse {
     @Builder
     public CosmeticPageResponse(long total, int size, int start, int display, List<CosmeticResponse> content, String brand) {
         this.last = ((start + display) >= total) || start == 100;
-        this.totalPages = (int) Math.ceil((double) total / display);
-        this.number = start / display;
+        if (total == 0) {
+            this.totalPages = 0;
+        } else {
+            this.totalPages = (int) Math.ceil((double) total / display);
+        }
+        if(display == 0) {
+            this.number = 0;
+        }else {
+            this.number = start / display;
+        }
         this.first = start == 1;
         this.numberOfElements = content.size();
         this.totalElement = total;
