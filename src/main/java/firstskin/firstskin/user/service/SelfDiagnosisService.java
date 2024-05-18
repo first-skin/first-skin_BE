@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import firstskin.firstskin.dianosis.domain.Diagnosis;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +18,12 @@ public class SelfDiagnosisService {
     @Autowired
     public SelfDiagnosisService(DiagnosisRepository diagnosisRepository) {
         this.diagnosisRepository = diagnosisRepository;
+    }
+
+
+    @Transactional
+    public Diagnosis saveDiagnosis(Diagnosis diagnosis) {
+        return diagnosisRepository.save(diagnosis);
     }
 
     @Transactional(readOnly = true)
