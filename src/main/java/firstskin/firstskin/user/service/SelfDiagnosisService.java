@@ -1,4 +1,4 @@
-package firstskin.firstskin.dianosis.service;
+package firstskin.firstskin.user.service;
 
 import firstskin.firstskin.dianosis.DiagnosisRepository;
 import org.springframework.beans.factory.annotation.Autowired;

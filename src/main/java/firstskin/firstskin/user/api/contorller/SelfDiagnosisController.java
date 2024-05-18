@@ -1,7 +1,7 @@
 package firstskin.firstskin.user.api.contorller;
 
 import firstskin.firstskin.dianosis.domain.Diagnosis;
-import firstskin.firstskin.dianosis.service.SelfDiagnosisService;
+import firstskin.firstskin.user.service.SelfDiagnosisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
