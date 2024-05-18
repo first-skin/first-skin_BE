@@ -44,5 +44,6 @@ public class CosmeticPageResponse {
         this.size = size;
         this.display = display;
         this.content = content;
+        this.brand = brand;
     }
 }
