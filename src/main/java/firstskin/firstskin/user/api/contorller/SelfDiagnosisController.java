@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +23,8 @@ public class SelfDiagnosisController {
 
     @GetMapping("/diagnosis")
     public Diagnosis getDiagnosisByDate(@RequestParam("date") LocalDate date) {
-        return diagnosisService.getDiagnosisByDate(date);
+        Optional<Diagnosis> optionalDiagnosis = diagnosisService.getDiagnosisByDate(date);
+        return optionalDiagnosis.orElse(null);
     }
 
 

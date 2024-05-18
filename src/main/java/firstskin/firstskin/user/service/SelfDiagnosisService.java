@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SelfDiagnosisService {
@@ -26,10 +28,9 @@ public class SelfDiagnosisService {
         return diagnosisRepository.save(diagnosis);
     }
 
-    @Transactional(readOnly = true)
-    public Diagnosis getDiagnosisByDate(LocalDate date) {
+    public Optional<Diagnosis> getDiagnosisByDate(LocalDate date) {
         LocalDateTime startDate = date.atStartOfDay();
-        LocalDateTime endDate = startDate.plusDays(1).minusNanos(1); // 해당 날짜의 끝 시간
-        return diagnosisRepository.findByCreatedDate(startDate, endDate);
+        LocalDateTime endDate = startDate.plusDays(1).minusNanos(1);
+        return diagnosisRepository.findByCreatedDateBetween(startDate, endDate);
     }
 }

@@ -94,9 +94,11 @@ public class MemberService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type","authorization_code");
         params.add("client_id","c33ec31ce21c44a27c43a6165664cb5a");
-        params.add("redirect_uri","http://localhost:8080/oauth2/kakao/callback");
+        params.add("redirect_uri","http://localhost:8080/api/oauth/kakao/callback");
         params.add("code",code);
 
+        System.out.println("인가 코드: " + code);
+        System.out.println("메서드");
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -111,6 +113,7 @@ public class MemberService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public KakaoProfile requestKakaoProfile(OauthToken oauthToken) {
@@ -133,6 +136,8 @@ public class MemberService {
             throw new RuntimeException(e);
         }
     }
+
+
 
     public void logoutRequest(String token) {
         String kakaoAccessToken = token;

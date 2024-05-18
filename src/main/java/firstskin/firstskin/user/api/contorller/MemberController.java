@@ -25,18 +25,18 @@ public class MemberController {
     final private MemberService memberService;
 
 
-    @GetMapping("/oauth2/kakao/callback")
+    @GetMapping("/oauth/kakao/callback")
     public ResponseEntity<String> login(@RequestParam String code, HttpServletRequest httpServletRequest){
 
         OauthToken oauthToken = memberService.requestToken(code);
         KakaoProfile kakaoProfile = memberService.requestKakaoProfile(oauthToken);
 
-        Member existingMember = memberService.findMemberById(kakaoProfile.getId())
-                .orElseThrow(IllegalArgumentException::new);
-
-        if (existingMember != null) {
+        Optional<Member> optionalMember = memberService.findMemberById(kakaoProfile.getId());
+        if (optionalMember.isPresent()) {
+            Member existingMember = optionalMember.get();
             memberService.sessionSave(httpServletRequest, existingMember, oauthToken);
-            return ResponseEntity.status(HttpStatus.OK).body("Logged-in");
+
+            return ResponseEntity.status(200).body("log-in");
         } else {
             Member newMember = new Member(
                     ROLE_USER,
@@ -47,7 +47,8 @@ public class MemberController {
             memberService.addMember(newMember);
             memberService.sessionSave(httpServletRequest, newMember, oauthToken);
 
-            return ResponseEntity.status(HttpStatus.OK).body("new-member");
+
+            return ResponseEntity.status(200).body("new-member");
         }
     }
     @GetMapping("/logout-kakao")
