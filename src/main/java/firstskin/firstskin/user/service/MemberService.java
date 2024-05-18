@@ -97,6 +97,8 @@ public class MemberService {
         params.add("redirect_uri","http://localhost:8080/api/oauth/kakao/callback");
         params.add("code",code);
 
+        System.out.println("인가 코드: " + code);
+        System.out.println("메서드");
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -111,6 +113,7 @@ public class MemberService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public KakaoProfile requestKakaoProfile(OauthToken oauthToken) {
@@ -133,6 +136,8 @@ public class MemberService {
             throw new RuntimeException(e);
         }
     }
+
+
 
     public void logoutRequest(String token) {
         String kakaoAccessToken = token;
