@@ -73,6 +73,7 @@ class CategoryServiceTest {
 
     @Test
     @DisplayName("카테고리를 삭제하면 삭제된다.")
+    @Transactional
     public void deleteCategory() throws Exception{
         //given
         Category category = new Category("스킨/로션");

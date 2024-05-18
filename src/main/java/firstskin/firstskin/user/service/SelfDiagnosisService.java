@@ -1,14 +1,15 @@
-package firstskin.firstskin.dianosis.service;
+package firstskin.firstskin.user.service;
 
 import firstskin.firstskin.dianosis.DiagnosisRepository;
+import firstskin.firstskin.dianosis.domain.Diagnosis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import firstskin.firstskin.dianosis.domain.Diagnosis;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+;
 
 @Service
 public class SelfDiagnosisService {

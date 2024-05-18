@@ -60,9 +60,6 @@ public class DiagnosisService {
     @Value("${model.detect_trouble}")
     private String detectTroubleModelPath;
 
-    @Value("${model.detect_trouble_h5}")
-    private String detectTroubleH5ModelPath;
-
     private SavedModelBundle typeModel;
     private SavedModelBundle troubleModel;
     private SavedModelBundle detectTroubleModel;
