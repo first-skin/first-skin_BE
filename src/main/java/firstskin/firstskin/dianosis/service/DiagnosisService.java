@@ -180,10 +180,9 @@ public class DiagnosisService {
         }
 
         // 이미지 파일이 아닐 경우 예외
-        List<String> allowedContentType = Arrays.asList("image/png", "image/jpeg", "image/jpg");
-        if (!allowedContentType.contains(request.getFile().getContentType())) {
-            throw new IllegalStateException("PNG, JPEG, JPG 파일만 업로드 가능합니다.");
-        }
+        List<String> allowedContentType = Arrays.asList("png", "jpeg", "jpg");
+        if(!allowedContentType.contains(request.getFile().getOriginalFilename().split("\\.")[1]))
+            throw new IllegalStateException("이미지 파일만 업로드 가능합니다.");
 
         MultipartFile file = request.getFile();
         String originalFilename = file.getOriginalFilename();
