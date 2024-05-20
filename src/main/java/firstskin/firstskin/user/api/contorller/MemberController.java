@@ -8,6 +8,7 @@ import firstskin.firstskin.user.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import static firstskin.firstskin.member.domain.Role.ROLE_USER;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@Slf4j
 public class MemberController {
 
     final private MemberService memberService;
@@ -27,6 +29,8 @@ public class MemberController {
 
     @GetMapping("/oauth/kakao/callback")
     public ResponseEntity<String> login(@RequestParam String code, HttpServletRequest httpServletRequest){
+
+        log.info("로그인 요청 받음. code: {}", code);
 
         OauthToken oauthToken = memberService.requestToken(code);
         KakaoProfile kakaoProfile = memberService.requestKakaoProfile(oauthToken);

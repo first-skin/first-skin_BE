@@ -14,7 +14,7 @@ public class Diagnosis extends BaseTimeEntity {
 
     @Id
     @Column(name = "diagnosis_id")
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long diagnosisId;
 
     @ManyToOne(fetch = FetchType.LAZY)
