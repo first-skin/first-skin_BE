@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,7 +27,6 @@ public class MemberController {
 
     final private MemberService memberService;
 
-
     @GetMapping("/oauth/kakao/callback")
     public ResponseEntity<String> login(@RequestParam String code, HttpServletRequest httpServletRequest){
 
@@ -35,12 +35,10 @@ public class MemberController {
         OauthToken oauthToken = memberService.requestToken(code);
         KakaoProfile kakaoProfile = memberService.requestKakaoProfile(oauthToken);
 
-        Optional<Member> optionalMember = memberService.findMemberById(kakaoProfile.getId());
-        if (optionalMember.isPresent()) {
-            Member existingMember = optionalMember.get();
-            memberService.sessionSave(httpServletRequest, existingMember, oauthToken);
-
-            return ResponseEntity.status(200).body("log-in");
+        Member findMember = memberService.findMemberByUserId(kakaoProfile.getId().toString());
+        if (findMember!=null) {
+            memberService.sessionSave(httpServletRequest, findMember, oauthToken);
+            return ResponseEntity.status(200).body("login");
         } else {
             Member newMember = new Member(
                     ROLE_USER,
@@ -50,8 +48,6 @@ public class MemberController {
 
             memberService.addMember(newMember);
             memberService.sessionSave(httpServletRequest, newMember, oauthToken);
-
-
             return ResponseEntity.status(200).body("new-member");
         }
     }

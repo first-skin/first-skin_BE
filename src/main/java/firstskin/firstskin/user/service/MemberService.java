@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class MemberService {
@@ -37,6 +38,9 @@ public class MemberService {
     }
 
 
+    public Member findMemberByUserId(String userId){
+        return memberRepository.findByUserId(userId);
+    }
     public Optional<Member> findMemberById(Long memberId) {
         return memberRepository.findById(memberId);
     }
@@ -148,12 +152,13 @@ public class MemberService {
         restTemplate.postForObject(logoutUrl + "?access_token=" + kakaoAccessToken, null, String.class);
     }
 
-    public void sessionSave(HttpServletRequest httpServletRequest, Member member, OauthToken oauthToken) {
+    public HttpSession sessionSave(HttpServletRequest httpServletRequest, Member member, OauthToken oauthToken) {
         httpServletRequest.getSession().invalidate();
         HttpSession session = httpServletRequest.getSession(true);
         session.setAttribute("memberId", member.getMemberId());
         session.setAttribute("access_token", oauthToken.getAccess_token());
         session.setMaxInactiveInterval(3600);
+        return session;
     }
 
 
