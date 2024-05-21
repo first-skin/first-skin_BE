@@ -1,5 +1,8 @@
 package firstskin.firstskin.dianosis.service;
 
+import firstskin.firstskin.common.exception.FileNotFound;
+import firstskin.firstskin.common.exception.MissMatchType;
+import firstskin.firstskin.common.exception.UserNotFound;
 import firstskin.firstskin.dianosis.DiagnosisRepository;
 import firstskin.firstskin.dianosis.api.request.DiagnosisDto;
 import firstskin.firstskin.dianosis.api.response.DiagnosisResponse;
@@ -14,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -150,14 +154,14 @@ public class DiagnosisService {
 
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
             // 퍼스널 컬러 진단
-            throw new IllegalStateException("퍼스널 컬러 진단은 준비 중입니다.");
+            throw new BadRequestException("퍼스널 컬러 진단은 준비 중입니다.");
         } else {
-            throw new IllegalStateException("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
+            throw new BadRequestException("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
         }
 
         // DB에 저장
         Member findMember = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new IllegalStateException(request.getMemberId() + " 회원을 찾을 수 없음"));
+                .orElseThrow(() -> new UserNotFound(request.getMemberId() + " 회원을 찾을 수 없음"));
 
         String finalResultLabel = resultLabel;
         Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(finalResultLabel + " is not found"));
@@ -176,13 +180,13 @@ public class DiagnosisService {
     private String saveFile(DiagnosisDto request) {
 
         if (request.getFile().isEmpty()) {
-            throw new IllegalStateException("업로드된 파일이 없습니다.");
+            throw new FileNotFound("업로드된 파일이 없습니다.");
         }
 
         // 이미지 파일이 아닐 경우 예외
         List<String> allowedContentType = Arrays.asList("png", "jpeg", "jpg");
         if(!allowedContentType.contains(request.getFile().getOriginalFilename().split("\\.")[1]))
-            throw new IllegalStateException("이미지 파일만 업로드 가능합니다.");
+            throw new MissMatchType("이미지 파일만 업로드 가능합니다.");
 
         MultipartFile file = request.getFile();
         String originalFilename = file.getOriginalFilename();
@@ -285,7 +289,7 @@ public class DiagnosisService {
         } else if (kind.equals(Kind.TROUBLE)) {
             return Paths.get(uploadDir, "skintrouble", "customers", year, month, day);
         } else {
-            throw new IllegalStateException("TROUBLE, TYPE 중 하나를 선택해주세요.");
+            throw new MissMatchType("TROUBLE, TYPE 중 하나를 선택해주세요.");
         }
     }
 

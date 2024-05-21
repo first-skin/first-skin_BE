@@ -21,7 +21,7 @@ public class CosmeticController {
     @GetMapping
     public CosmeticPageResponse searchCosmetics(CosmeticRequest request) throws JsonProcessingException {
 
-      log.info("request : {}", request);
+        log.info("request : {}", request);
         return cosmeticService.searchCosmetics(request);
 
     }
