@@ -65,6 +65,7 @@ public class MemberController {
 
         HttpSession session = request.getSession(false);
         if (session != null) {
+            log.info("로그아웃 memberId: {}", session.getAttribute("memberId"));
             session.invalidate();
         }
 
