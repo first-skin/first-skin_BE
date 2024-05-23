@@ -22,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @Service
 public class MemberService {
@@ -65,6 +64,10 @@ public class MemberService {
         }
     }
 
+    public Optional<Member> getMemberByIdNotDto(Long memberId){
+        return memberRepository.findById(memberId);
+    }
+
     public void updateProfile(Long memberId, MemberDto memberDto) {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
         if (optionalMember.isPresent()) {
@@ -77,8 +80,7 @@ public class MemberService {
     }
 
 
-
-    private MemberDto mapToDto(Member member) {
+    public MemberDto mapToDto(Member member) {
         return new MemberDto(
                 member.getNickname(),
                 member.getProfileUrl(),

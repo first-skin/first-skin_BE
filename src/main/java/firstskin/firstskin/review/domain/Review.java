@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @NoArgsConstructor
 @Getter
@@ -13,7 +16,7 @@ public class Review extends BaseTimeEntity {
 
     @Id
     @Column(name = "review_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
