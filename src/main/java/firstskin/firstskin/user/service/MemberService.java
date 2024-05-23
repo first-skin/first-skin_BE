@@ -9,6 +9,7 @@ import firstskin.firstskin.model.OauthToken;
 import firstskin.firstskin.user.api.dto.MemberDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,9 +23,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @Service
+@Slf4j
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -98,11 +99,9 @@ public class MemberService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type","authorization_code");
         params.add("client_id","c33ec31ce21c44a27c43a6165664cb5a");
-        params.add("redirect_uri","http://localhost:8080/api/oauth/kakao/callback");
+        params.add("redirect_uri","http://ceprj.gachon.ac.kr:60022/api/oauth/kakao/callback");
         params.add("code",code);
 
-        System.out.println("인가 코드: " + code);
-        System.out.println("메서드");
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -158,6 +157,8 @@ public class MemberService {
         session.setAttribute("memberId", member.getMemberId());
         session.setAttribute("access_token", oauthToken.getAccess_token());
         session.setMaxInactiveInterval(3600);
+        log.info("세션 저장 완료. memberId: {}", member.getMemberId());
+        log.info("저장된 memberId 세션: {}", session.getAttribute("memberId"));
         return session;
     }
 
