@@ -9,5 +9,5 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface DiagnosisRepository extends JpaRepository<Diagnosis, Long> {
-    Optional<Diagnosis> findByCreatedDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    Optional<Diagnosis> findByMemberIdAndCreatedDateBetween(Long memberId, LocalDateTime startDate, LocalDateTime endDate);
 }
