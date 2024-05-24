@@ -66,6 +66,10 @@ public class MemberService {
         }
     }
 
+    public Optional<Member> getMemberByIdNotDto(Long memberId){
+        return memberRepository.findById(memberId);
+    }
+
     public void updateProfile(Long memberId, MemberDto memberDto) {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
         if (optionalMember.isPresent()) {
@@ -78,8 +82,7 @@ public class MemberService {
     }
 
 
-
-    private MemberDto mapToDto(Member member) {
+    public MemberDto mapToDto(Member member) {
         return new MemberDto(
                 member.getNickname(),
                 member.getProfileUrl(),
