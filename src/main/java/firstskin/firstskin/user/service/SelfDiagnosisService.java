@@ -5,6 +5,7 @@ import firstskin.firstskin.dianosis.domain.Diagnosis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,9 +30,9 @@ public class SelfDiagnosisService {
         return diagnosisRepository.save(diagnosis);
     }
 
-    public Optional<Diagnosis> getDiagnosisByDate(LocalDate date) {
+    public Optional<Diagnosis> getDiagnosisByDate(Long memberId, LocalDate date) {
         LocalDateTime startDate = date.atStartOfDay();
         LocalDateTime endDate = startDate.plusDays(1).minusNanos(1);
-        return diagnosisRepository.findByCreatedDateBetween(startDate, endDate);
+        return diagnosisRepository.findByMemberIdAndCreatedDateBetween(memberId, startDate, endDate);
     }
 }
