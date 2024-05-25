@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin")
+@RequestMapping("/api")
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -20,17 +20,17 @@ public class CategoryController {
         return categoryService.getAllCategories();
     }
 
-    @PostMapping("/category")
+    @PostMapping("/admin/category")
     public void addCategory(String category) {
         categoryService.addCategory(category);
     }
 
-    @PutMapping("/category")
+    @PutMapping("/admin/category")
     public void updateCategory(EditCategory category) {
         categoryService.editCategory(category);
     }
 
-    @DeleteMapping("/category/{categoryId}")
+    @DeleteMapping("/admin/category/{categoryId}")
     public void deleteCategory(@PathVariable Long categoryId) {
         categoryService.deleteCategory(categoryId);
     }
