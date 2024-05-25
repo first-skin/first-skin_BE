@@ -21,9 +21,9 @@ public class SelfDiagnosisController {
         return diagnosisService.saveDiagnosis(diagnosis);
     }
 
-    @GetMapping("/diagnosis")
-    public Diagnosis getDiagnosisByDate(@RequestParam("date") LocalDate date) {
-        Optional<Diagnosis> optionalDiagnosis = diagnosisService.getDiagnosisByDate(date);
+    @GetMapping("/diagnosis/{memberId}")
+    public Diagnosis getDiagnosisByDate(@PathVariable Long memberId, @RequestParam("date") LocalDate date) {
+        Optional<Diagnosis> optionalDiagnosis = diagnosisService.getDiagnosisByDate(memberId, date);
         return optionalDiagnosis.orElse(null);
     }
 

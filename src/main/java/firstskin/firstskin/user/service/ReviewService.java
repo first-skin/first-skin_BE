@@ -1,25 +1,28 @@
 package firstskin.firstskin.user.service;
 
 import firstskin.firstskin.member.domain.Member;
-import firstskin.firstskin.member.repository.MemberRepository;
 import firstskin.firstskin.review.domain.Review;
+import firstskin.firstskin.review.domain.ReviewImage;
+import firstskin.firstskin.review.repository.ReviewImageRepository;
 import firstskin.firstskin.review.repository.ReviewRepository;
 import firstskin.firstskin.user.api.dto.UpdateReview;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewImageRepository reviewImageRepository;
 
-    public ReviewService(ReviewRepository reviewRepository) {
+    public ReviewService(ReviewRepository reviewRepository, ReviewImageRepository reviewImageRepository) {
         this.reviewRepository = reviewRepository;
+        this.reviewImageRepository = reviewImageRepository;
     }
 
-    public List<Review> getAllReviews(Long productId){
+    public List<Review> getAllProductReviews(Long productId){
         return reviewRepository.findByProductId(productId);
     }
 
@@ -27,8 +30,16 @@ public class ReviewService {
         return reviewRepository.findByMember_MemberId(memberId);
     }
 
-    public void addReview(Member member, Long productId, String content, int score){
+    @Transactional
+    public void addReview(Member member, Long productId, String content, int score, List<String> reviewImages) {
+        // 리뷰 생성
         Review newReview = new Review(member, productId, content, score, true);
+
+        // 리뷰 이미지 생성 및 추가
+        for (String imageUrl : reviewImages) {
+            ReviewImage reviewImage = new ReviewImage(newReview, imageUrl);
+            reviewImageRepository.save(reviewImage);
+        }
         reviewRepository.save(newReview);
     }
 
