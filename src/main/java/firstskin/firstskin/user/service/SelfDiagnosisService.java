@@ -29,9 +29,12 @@ public class SelfDiagnosisService {
 
     }
 
-    public Optional<Diagnosis> getDiagnosisByDate(Long memberId, LocalDate date) {
+    public Optional<Diagnosis> getDiagnosisByDate(Optional<Member> member, LocalDate date) {
+        if (member.isEmpty()) {
+            return Optional.empty();
+        }
         LocalDateTime startDate = date.atStartOfDay();
         LocalDateTime endDate = startDate.plusDays(1).minusNanos(1);
-        return diagnosisRepository.findTopByMember_MemberIdAndCreatedDateBetweenOrderByCreatedDateDesc(memberId, startDate, endDate);
+        return diagnosisRepository.findTopByMemberAndCreatedDateBetweenOrderByCreatedDateDesc(member.get(), startDate, endDate);
     }
 }
