@@ -7,7 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class SelfDiagnosisDto {
-    private Kind kind;
+    private String Description;
     private String result;
     private String skinPictureUrl;
 }

@@ -43,6 +43,6 @@ public class SelfDiagnosisService {
     }
     private SelfDiagnosisDto SelfConvertToDto(Diagnosis diagnosis) {
         Skin skin = diagnosis.getSkin();
-        return new SelfDiagnosisDto(skin.getKind(), skin.getResult(), diagnosis.getSkinPictureUrl());
+        return new SelfDiagnosisDto(skin.getKind().getDescription(), skin.getResult(), diagnosis.getSkinPictureUrl());
     }
 }
