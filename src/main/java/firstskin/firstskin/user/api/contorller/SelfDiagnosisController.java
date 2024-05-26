@@ -2,6 +2,7 @@ package firstskin.firstskin.user.api.contorller;
 
 import firstskin.firstskin.dianosis.domain.Diagnosis;
 import firstskin.firstskin.member.domain.Member;
+import firstskin.firstskin.user.api.dto.SelfDiagnosisDto;
 import firstskin.firstskin.user.service.MemberService;
 import firstskin.firstskin.user.service.SelfDiagnosisService;
 import jakarta.servlet.http.HttpSession;
@@ -22,11 +23,11 @@ public class SelfDiagnosisController {
 
 
 
-    @GetMapping("")
-    public Diagnosis getDiagnosisByDate(HttpSession session, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    @GetMapping()
+    public SelfDiagnosisDto getDiagnosisByDate(HttpSession session, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Long memberId = (Long) session.getAttribute("memberId");
         Optional<Member> member = memberService.findMemberById(memberId);
-        Optional<Diagnosis> optionalDiagnosis = diagnosisService.getDiagnosisByDate(member, date);
+        Optional<SelfDiagnosisDto> optionalDiagnosis = diagnosisService.getDiagnosisByDate(member, date);
         return optionalDiagnosis.orElse(null);
     }
 
