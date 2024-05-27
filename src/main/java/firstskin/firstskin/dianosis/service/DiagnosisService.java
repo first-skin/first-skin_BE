@@ -1,5 +1,6 @@
 package firstskin.firstskin.dianosis.service;
 
+import firstskin.firstskin.common.component.ModelPathResolver;
 import firstskin.firstskin.common.exception.FileNotFound;
 import firstskin.firstskin.common.exception.MissMatchType;
 import firstskin.firstskin.common.exception.UserNotFound;
@@ -51,16 +52,17 @@ public class DiagnosisService {
     private final DiagnosisRepository diagnosisRepository;
     private final MemberRepository memberRepository;
     private final SkinRepository skinRepository;
+    private final ModelPathResolver modelPathResolver;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    @Value("${model.type}")
-    private String typeModelPath;
-
-    @Value("${model.trouble}")
-    private String troubleModelPath;
-
+//    @Value("${model.type}")
+//    private String typeModelPath;
+//
+//    @Value("${model.trouble}")
+//    private String troubleModelPath;
+//
     @Value("${model.detect_trouble}")
     private String detectTroubleModelPath;
 
@@ -70,6 +72,9 @@ public class DiagnosisService {
 
     @PostConstruct
     public void init() {
+        String typeModelPath = modelPathResolver.resolveTypeModelPath();
+        String troubleModelPath = modelPathResolver.resolveTroubleModelPath();
+
         typeModel = SavedModelBundle.load(typeModelPath, "serve");
         troubleModel = SavedModelBundle.load(troubleModelPath, "serve");
         detectTroubleModel = SavedModelBundle.load(detectTroubleModelPath, "serve");

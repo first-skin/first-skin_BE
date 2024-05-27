@@ -6,9 +6,11 @@ import firstskin.firstskin.skin.Skin;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Diagnosis extends BaseTimeEntity {
 
