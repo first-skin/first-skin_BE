@@ -1,14 +1,15 @@
 package firstskin.firstskin.user.api.contorller;
 
+import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.review.domain.Review;
 import firstskin.firstskin.user.api.dto.AddReviewDto;
-import firstskin.firstskin.user.api.dto.MemberDto;
 import firstskin.firstskin.user.api.dto.UpdateReview;
+import firstskin.firstskin.user.service.MemberService;
 import firstskin.firstskin.user.service.ReviewService;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reviews")
