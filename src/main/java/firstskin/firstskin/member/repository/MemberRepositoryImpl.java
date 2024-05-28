@@ -5,6 +5,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import firstskin.firstskin.admin.api.dto.response.MemberResponse;
+import firstskin.firstskin.dianosis.domain.QDiagnosis;
 import firstskin.firstskin.skin.Kind;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,13 +50,38 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return new PageImpl<>(fetch, pageable, count == null ? 0 : count);
     }
 
-    private static JPQLQuery<String> selectKindOfSkin(Kind type) {
-        return JPAExpressions
-                .select(skin.result)
-                .from(diagnosis)
-                .join(diagnosis.skin, skin)
-                .where(diagnosis.member.eq(member).and(skin.kind.eq(type)))
-                .orderBy(diagnosis.createdDate.desc())
-                .limit(1);
-    }
+//    private static JPQLQuery<String> selectKindOfSkin(Kind type) {
+//        return JPAExpressions
+//                .select(skin.result)
+//                .from(diagnosis)
+//                .join(diagnosis.skin, skin)
+//                .where(diagnosis.member.eq(member)
+//                        .and(skin.kind.eq(type))
+//                        .and(diagnosis.createdDate.eq(
+//                                JPAExpressions
+//                                        .select(diagnosis.createdDate.max())
+//                                        .from(diagnosis)
+//                                        .where(diagnosis.member.eq(member)
+//                                                .and(skin.kind.eq(type)))
+//                        )));
+////                .orderBy(diagnosis.createdDate.desc())
+////                .limit(1);
+//    }
+private JPQLQuery<String> selectKindOfSkin(Kind kind) {
+    QDiagnosis subDiagnosis = new QDiagnosis("subDiagnosis");
+
+    return JPAExpressions
+            .select(skin.result)
+            .from(diagnosis)
+            .join(diagnosis.skin, skin)
+            .where(diagnosis.member.eq(member)
+                    .and(skin.kind.eq(kind))
+                    .and(diagnosis.createdDate.eq(
+                            JPAExpressions
+                                    .select(subDiagnosis.createdDate.max())
+                                    .from(subDiagnosis)
+                                    .where(subDiagnosis.member.eq(member)
+                                            .and(subDiagnosis.skin.kind.eq(kind)))
+                    )));
+}
 }

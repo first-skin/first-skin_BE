@@ -116,6 +116,7 @@ class MemberRepositoryImplTest {
         diagnosisRepository.save(진단4);
         diagnosisRepository.save(진단5);
         diagnosisRepository.save(진단6);
+        diagnosisRepository.save(진단66);
         //when
 
         Pageable pageable = Pageable.ofSize(10).withPage(0);
