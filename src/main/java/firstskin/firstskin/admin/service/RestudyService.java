@@ -20,7 +20,7 @@ public class RestudyService {
         log.info("{} 재학습 시작, 모델 경로: {}, df 경로: {}", request.getKind(), request.getModelPath(), request.getDfPath());
 
         try {
-            ProcessBuilder pb = new ProcessBuilder("python3", restudyPath, request.getModelPath(), request.getDfPath());
+            ProcessBuilder pb = new ProcessBuilder("python3", restudyPath, request.getModelPath(), request.getDfPath(), request.getKind().toString());
             pb.redirectErrorStream(true);
 
             log.info("재학습 명령어: {}", pb.command());
