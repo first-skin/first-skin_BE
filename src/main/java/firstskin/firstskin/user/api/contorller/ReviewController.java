@@ -2,12 +2,15 @@ package firstskin.firstskin.user.api.contorller;
 
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.review.domain.Review;
-import firstskin.firstskin.user.api.dto.AddReviewDto;
 import firstskin.firstskin.user.api.dto.UpdateReview;
 import firstskin.firstskin.user.service.MemberService;
 import firstskin.firstskin.user.service.ReviewService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +27,8 @@ public class ReviewController {
         this.memberService = memberService;
     }
 
+
+
     @GetMapping("/{productId}")
     public List<Review> getAllReviews(@PathVariable Long productId) {
         return reviewService.getAllProductReviews(productId);
@@ -39,11 +44,15 @@ public class ReviewController {
     }
 
     @PostMapping
-    public void addReview(@RequestBody AddReviewDto request) {
-        Long memberId = request.getMemberId();
+    public ResponseEntity<String> addReview(HttpSession session,
+                                            @RequestParam("productId") Long productId,
+                                            @RequestParam("content") String content,
+                                            @RequestParam("score") int score,
+                                            @RequestPart("reviewImages") List<MultipartFile> reviewImages) throws IOException {
+        Long memberId = (Long) session.getAttribute("memberId");
         Optional<Member> member = memberService.getMemberByIdNotDto(memberId);
-
-        reviewService.addReview(member.get(), request.getProductId(), request.getContent(), request.getScore(), request.getReviewImages() );
+        reviewService.addReview(member.get(), productId, content, score, reviewImages);
+        return ResponseEntity.ok("Review added successfully.");
     }
 
     @PutMapping

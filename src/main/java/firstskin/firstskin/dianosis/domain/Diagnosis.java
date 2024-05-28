@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class Diagnosis extends BaseTimeEntity {
 
     @Id
