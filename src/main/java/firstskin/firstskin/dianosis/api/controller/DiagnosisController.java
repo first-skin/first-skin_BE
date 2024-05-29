@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/skin/diagnosis")
@@ -23,7 +21,7 @@ public class DiagnosisController {
     private final DiagnosisService diagnosisService;
 
     @PostMapping
-    public DiagnosisResponse diagnosisSkin(DiagnosisDto diagnosisDto, HttpServletRequest request) throws IOException {
+    public DiagnosisResponse diagnosisSkin(DiagnosisDto diagnosisDto, HttpServletRequest request) throws Exception {
         HttpSession session = request.getSession(false);
         log.info("진단 요청 session : {}", session);
         if (session == null) {

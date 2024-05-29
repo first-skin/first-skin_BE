@@ -1,5 +1,6 @@
 package firstskin.firstskin.dianosis.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import firstskin.firstskin.common.component.ModelPathResolver;
 import firstskin.firstskin.common.exception.FileNotFound;
 import firstskin.firstskin.common.exception.MissMatchType;
@@ -15,6 +16,7 @@ import firstskin.firstskin.skin.Skin;
 import firstskin.firstskin.skin.repository.SkinRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -31,8 +33,7 @@ import org.tensorflow.types.TFloat32;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,10 +45,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DiagnosisService {
 
     private final String[] typeLabels = {"dry", "normal", "oily"};
     private final String[] troubleLabels = {"normal", "trouble"};
+
+    private final String[] personalColorLabels = {"fall", "spring", "summer", "winter"};
 
     private final DiagnosisRepository diagnosisRepository;
     private final MemberRepository memberRepository;
@@ -57,31 +61,34 @@ public class DiagnosisService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-//    @Value("${model.type}")
-//    private String typeModelPath;
-//
-//    @Value("${model.trouble}")
-//    private String troubleModelPath;
-//
     @Value("${model.detect_trouble}")
     private String detectTroubleModelPath;
+
+    @Value("${python.white_balance}")
+    private String whiteBalancePythonPath;
+
+    @Value("${python.detect_face}")
+    private String detectFacePythonPath;
 
     private SavedModelBundle typeModel;
     private SavedModelBundle troubleModel;
     private SavedModelBundle detectTroubleModel;
+    private SavedModelBundle personalColorModel;
 
     @PostConstruct
     public void init() {
         String typeModelPath = modelPathResolver.resolveTypeModelPath();
         String troubleModelPath = modelPathResolver.resolveTroubleModelPath();
+        String personalColorModelPath = modelPathResolver.resolvePersonalColorModelPath();
 
         typeModel = SavedModelBundle.load(typeModelPath, "serve");
         troubleModel = SavedModelBundle.load(troubleModelPath, "serve");
         detectTroubleModel = SavedModelBundle.load(detectTroubleModelPath, "serve");
+        personalColorModel = SavedModelBundle.load(personalColorModelPath, "serve");
     }
 
 
-    public DiagnosisResponse diagnosisSkin(DiagnosisDto request) throws IOException {
+    public DiagnosisResponse diagnosisSkin(DiagnosisDto request) throws Exception {
 
         String filePath = saveFile(request);
 
@@ -152,14 +159,42 @@ public class DiagnosisService {
                 float[] detectTroubleResultArray = new float[4];
                 detectTroubleFloatNdArray.scalars().forEachIndexed((idx, flt) -> detectTroubleResultArray[(int) idx[1]] = flt.getFloat());
 
-//                filePath = runPythonScript(filePath, detectTroubleH5ModelPath);
             }
 
             updateTroubleCsvFile(maxIndex, filePath);
 
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
             // 퍼스널 컬러 진단
-            throw new BadRequestException("퍼스널 컬러 진단은 준비 중입니다.");
+
+            // 화이트 밸런스 조정
+            whiteBalance(filePath);
+
+            // 얼굴 인식 및 퍼스널 컬러 코드 추출
+            int[][] hsvArrayInt = new int[1][9];
+            double[][] hsvArray = detectFaceForPersonalColor(filePath);
+
+            // double[][] -> int[] 변환
+            for (int i = 0; i < 9; i++) {
+                hsvArrayInt[0][i] = (int) hsvArray[0][i];
+            }
+
+            // 퍼스널 컬러 모델 돌리자
+            result = (TFloat32) personalColorModel.session().runner()
+                    .feed("serving_default_dense_3_input:0", TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArrayInt).shape()))
+                    .fetch("StatefulPartitionedCall:0")
+                    .run().get(0);
+
+            FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
+
+            result.copyTo(floatNdArray);
+            float[] resultArray = new float[4];
+            floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+
+            int maxIndex = argMax(resultArray);
+            resultLabel = personalColorLabels[maxIndex];
+
+            updatePersonalColorCsvFile(maxIndex, filePath, hsvArrayInt[0]);
+
         } else {
             throw new BadRequestException("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
         }
@@ -182,6 +217,67 @@ public class DiagnosisService {
         return new DiagnosisResponse(resultLabel);
     }
 
+    private double[][] detectFaceForPersonalColor(String filePath) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder("python3", detectFacePythonPath, filePath);
+        pb.redirectErrorStream(true);
+
+        Process process = pb.start();
+        StringBuilder output = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new RuntimeException("Python script execution failed with exit code: " + exitCode);
+        }
+
+        String jsonOutput = output.toString();
+        return parseJsonTo2DArray(jsonOutput);
+    }
+
+    private static double[][] parseJsonTo2DArray(String json) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(json, double[][].class);
+    }
+
+    private void whiteBalance(String filePath) throws IOException, InterruptedException {
+
+        log.info("화이트 밸런스 조정 시작");
+        ProcessBuilder pb = new ProcessBuilder("python3", whiteBalancePythonPath, filePath);
+        pb.redirectErrorStream(true);
+
+        Process p = pb.start();
+        StringBuilder sb = new StringBuilder();
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            log.info("화이트 밸런스 조정 로그: {}", sb);
+            log.info("화이트 밸런스 조정 완료");
+        }
+
+        int exitCode = p.waitFor();
+        if (exitCode != 0) {
+            log.error("화이트 밸런스 조정 실패");
+            throw new RuntimeException("화이트 밸런스 조정 실패");
+        }
+        // 파일이 성공적으로 생성되었는지 확인
+        File outputFile = new File(filePath);
+        if (!outputFile.exists()) {
+            log.error("화이트 밸런스 조정 후 파일이 존재하지 않습니다: {}", filePath);
+            throw new RuntimeException("화이트 밸런스 조정 후 파일이 존재하지 않습니다.");
+        }
+    }
+
     private String saveFile(DiagnosisDto request) {
 
         if (request.getFile().isEmpty()) {
@@ -190,7 +286,7 @@ public class DiagnosisService {
 
         // 이미지 파일이 아닐 경우 예외
         List<String> allowedContentType = Arrays.asList("png", "jpeg", "jpg");
-        if(!allowedContentType.contains(request.getFile().getOriginalFilename().split("\\.")[1]))
+        if (!allowedContentType.contains(request.getFile().getOriginalFilename().split("\\.")[1]))
             throw new MissMatchType("이미지 파일만 업로드 가능합니다.");
 
         MultipartFile file = request.getFile();
@@ -293,8 +389,10 @@ public class DiagnosisService {
             return Paths.get(uploadDir, "skintype", "customers", year, month, day);
         } else if (kind.equals(Kind.TROUBLE)) {
             return Paths.get(uploadDir, "skintrouble", "customers", year, month, day);
+        } else if (kind.equals(Kind.PERSONAL_COLOR)) {
+            return Paths.get(uploadDir, "personal_color", "customers", year, month, day);
         } else {
-            throw new MissMatchType("TROUBLE, TYPE 중 하나를 선택해주세요.");
+            throw new MissMatchType("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
         }
     }
 
@@ -332,6 +430,12 @@ public class DiagnosisService {
 
     }
 
+    private void updatePersonalColorCsvFile(int labelIndex, String filePath, int[] hsvArray) {
+        Path csvFile = getPersonalColorCsvFilePath();
+
+        isAlreadyExist(labelIndex, filePath, csvFile, hsvArray);
+    }
+
     private void isAlreadyExist(int labelIndex, String filePath, Path csvFile) {
         boolean fileAlreadyExists = Files.exists(csvFile);
 
@@ -342,6 +446,22 @@ public class DiagnosisService {
         try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
             csvPrinter.printRecord(filePath, labelIndex);
+            csvPrinter.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("csv 저장 실패");
+        }
+    }
+
+    private void isAlreadyExist(int labelIndex, String filePath, Path csvFile, int[] hsvArray) {
+        boolean fileAlreadyExists = Files.exists(csvFile);
+
+        CSVFormat format = fileAlreadyExists ?
+                CSVFormat.DEFAULT :
+                CSVFormat.DEFAULT.builder().build();
+
+        try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+             CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
+            csvPrinter.printRecord(filePath, hsvArray[0], hsvArray[1], hsvArray[2], hsvArray[3], hsvArray[4], hsvArray[5], hsvArray[6], hsvArray[7], hsvArray[8], labelIndex);
             csvPrinter.flush();
         } catch (IOException e) {
             throw new RuntimeException("csv 저장 실패");
@@ -362,6 +482,13 @@ public class DiagnosisService {
         return Paths.get(uploadDir, "skintrouble/skintrouble_df.csv");
     }
 
+    private Path getPersonalColorCsvFilePath() {
+        // 폴더가 존재하지 않으면 생성
+        personalColorMakeDirIfNotExist();
+
+        return Paths.get(uploadDir, "personal_color/personalcolor_df.csv");
+    }
+
     private void typeMakeDirIfNotExist() {
         Path path = Paths.get(uploadDir, "skintype");
         createDirIfNotExist(path);
@@ -372,57 +499,9 @@ public class DiagnosisService {
         createDirIfNotExist(path);
     }
 
-//    // 파이썬 스크립트 실행
-//    private String runPythonScript(String imagePath, String modelPath) {
-//        String path = uploadDir + "detect_trouble/";
-//        String pythonScriptPath = path + "detect_trouble.py";
-//        String outputImagePath = generateOutputImagePath(imagePath);
-//        StringBuilder result = new StringBuilder();
-//
-//        try {
-//            // 가상 환경 경로 설정
-//            String venvPath = "/Users/wonu/Desktop/t24122/myenv";  // Linux/MacOS
-//
-//            // 가상 환경을 활성화하고 Python 스크립트를 실행하는 명령어
-//            String[] command = {
-//                    "/bin/bash", "-c",
-//                    "source " + venvPath + "/bin/activate && python " + pythonScriptPath + " " + imagePath + " " + modelPath + " " + outputImagePath
-//            };
-//
-//            // ProcessBuilder를 사용하여 명령어 실행
-//            ProcessBuilder processBuilder = new ProcessBuilder(command);
-//            processBuilder.redirectErrorStream(true);
-//            Process process = processBuilder.start();
-//
-//            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                result.append(line).append("\n");
-//            }
-//
-//            int exitCode = process.waitFor();
-//            result.append("Exited with code: ").append(exitCode);
-//
-//            if (exitCode != 0) {
-//                System.err.println(result.toString());  // 에러 메시지 출력
-//                throw new RuntimeException("Python script execution failed with exit code " + exitCode);
-//            }
-//
-//        } catch (IOException | InterruptedException e) {
-//            throw new RuntimeException("Failed to run Python script", e);
-//        }
-//
-//
-//        return outputImagePath;
-//    }
-//
-//    private String generateOutputImagePath(String imagePath) {
-//        int dotIndex = imagePath.lastIndexOf('.');
-//        if (dotIndex == -1) {
-//            throw new IllegalArgumentException("Invalid image file path: " + imagePath);
-//        }
-//        String base = imagePath.substring(0, dotIndex);
-//        String extension = imagePath.substring(dotIndex);
-//        return base + "_detected" + extension;
-//    }
+    private void personalColorMakeDirIfNotExist() {
+        Path path = Paths.get(uploadDir, "personal_color");
+        createDirIfNotExist(path);
+    }
+
 }
