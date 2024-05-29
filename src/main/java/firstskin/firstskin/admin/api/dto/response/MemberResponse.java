@@ -1,22 +1,25 @@
 package firstskin.firstskin.admin.api.dto.response;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Getter
 @ToString
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberResponse {
 
-    private final Long memberId;
-    private final String userId;
-    private final String profile;
-    private final LocalDateTime createdDate;
-    private final String nickname;
-    private final String type;
-    private final String trouble;
-    private final String personalColor;
+    private Long memberId;
+    private String userId;
+    private String profile;
+    private LocalDateTime createdDate;
+    private String nickname;
+    private String type;
+    private String trouble;
+    private String personalColor;
 
     public MemberResponse(Long memberId, String userId, String profile, LocalDateTime createdDate, String nickname, String type, String trouble, String personalColor) {
         this.memberId = memberId;
