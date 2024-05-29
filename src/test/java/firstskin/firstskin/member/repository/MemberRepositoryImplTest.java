@@ -2,6 +2,7 @@ package firstskin.firstskin.member.repository;
 
 import firstskin.firstskin.admin.api.dto.response.MemberResponse;
 import firstskin.firstskin.dianosis.DiagnosisRepository;
+import firstskin.firstskin.dianosis.api.response.PersonalResult;
 import firstskin.firstskin.dianosis.domain.Diagnosis;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.member.domain.Role;
@@ -16,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class MemberRepositoryImplTest {
@@ -125,6 +128,107 @@ class MemberRepositoryImplTest {
 
         //then
         members.forEach(System.out::println);
+
+    }
+
+    @Test
+    @DisplayName("회원의 퍼스널컬러, 타입, 트러블 결과 조회")
+    @Transactional
+    public void getPersonalResult() throws Exception{
+        //given
+        Member member1 = new Member(Role.ROLE_USER, "프로필사진1", "아이디1", "닉네임1");
+        Member member2 = new Member(Role.ROLE_USER, "프로필사진2", "아이디2", "닉네임2");
+
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        Skin ps1 = new Skin(Kind.PERSONAL_COLOR, "봄웜");
+        Skin ps2 = new Skin(Kind.PERSONAL_COLOR, "가을쿨");
+        Skin ps3 = new Skin(Kind.PERSONAL_COLOR, "겨울웜");
+        Skin ps4 = new Skin(Kind.PERSONAL_COLOR, "여름쿨");
+
+        Skin ts1 = new Skin(Kind.TYPE, "드라이");
+        Skin ts2 = new Skin(Kind.TYPE, "지성");
+        Skin ts3 = new Skin(Kind.TYPE, "복합성");
+
+        Skin tt1 = new Skin(Kind.TROUBLE, "여드름");
+        Skin tt2 = new Skin(Kind.TROUBLE, "각질");
+        Skin tt3 = new Skin(Kind.TROUBLE, "건조함");
+
+        skinRepository.save(ps1);
+        skinRepository.save(ps2);
+        skinRepository.save(ps3);
+        skinRepository.save(ps4);
+        skinRepository.save(ts1);
+        skinRepository.save(ts2);
+        skinRepository.save(ts3);
+//        skinRepository.save(tt1);
+//        skinRepository.save(tt2);
+//        skinRepository.save(tt3);
+
+
+        Diagnosis 진단1 = Diagnosis.builder()
+                .member(member1)
+                .skin(ps1)
+                .skinPictureUrl("사진1")
+                .build();
+
+        Diagnosis 진단2 = Diagnosis.builder()
+                .member(member1)
+                .skin(ts2)
+                .skinPictureUrl("사진2")
+                .build();
+
+//        Diagnosis 진단3 = Diagnosis.builder()
+//                .member(member1)
+//                .skin(tt1)
+//                .skinPictureUrl("사진3")
+//                .build();
+//
+//        Diagnosis 진단66 = Diagnosis.builder()
+//                .member(member2)
+//                .skin(tt3)
+//                .skinPictureUrl("사진3")
+//                .build();
+
+        Diagnosis 진단4 = Diagnosis.builder()
+                .member(member2)
+                .skin(ps4)
+                .skinPictureUrl("사진4")
+                .build();
+
+        Diagnosis 진단5 = Diagnosis.builder()
+                .member(member2)
+                .skin(ts3)
+                .skinPictureUrl("사진5")
+                .build();
+
+//        Diagnosis 진단6 = Diagnosis.builder()
+//                .member(member2)
+//                .skin(tt2)
+//                .skinPictureUrl("사진6")
+//                .build();
+
+        diagnosisRepository.save(진단1);
+        diagnosisRepository.save(진단2);
+//        diagnosisRepository.save(진단3);
+        diagnosisRepository.save(진단4);
+        diagnosisRepository.save(진단5);
+//        diagnosisRepository.save(진단6);
+//        diagnosisRepository.save(진단66);
+        //when
+        PersonalResult personalSkins = memberRepository.getPersonalResults(member1);
+        assertThat(personalSkins.getPersonalColor()).isEqualTo("봄웜");
+        assertThat(personalSkins.getType()).isEqualTo("지성");
+        assertThat(personalSkins.getTrouble()).isNull();
+
+        PersonalResult personalResults = memberRepository.getPersonalResults(member2);
+        assertThat(personalResults.getPersonalColor()).isEqualTo("여름쿨");
+        assertThat(personalResults.getType()).isEqualTo("복합성");
+        assertThat(personalResults.getTrouble()).isNull();
+
+
+        //then
 
     }
 

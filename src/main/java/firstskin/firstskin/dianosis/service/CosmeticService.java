@@ -4,9 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import firstskin.firstskin.common.exception.UserNotFound;
+import firstskin.firstskin.dianosis.api.request.CosmeticPersonal;
+import firstskin.firstskin.dianosis.api.request.CosmeticPersonalRequest;
 import firstskin.firstskin.dianosis.api.request.CosmeticRequest;
 import firstskin.firstskin.dianosis.api.response.CosmeticPageResponse;
 import firstskin.firstskin.dianosis.api.response.CosmeticResponse;
+import firstskin.firstskin.dianosis.api.response.PersonalResult;
+import firstskin.firstskin.member.domain.Member;
+import firstskin.firstskin.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +38,8 @@ public class CosmeticService {
     private String clientSecret;
     private final ObjectMapper objectMapper;
 
+    private final MemberRepository memberRepository;
+
     public CosmeticPageResponse searchCosmetics(CosmeticRequest request) throws JsonProcessingException {
 
         ResponseEntity<String> exchange = getStringResponseEntity(request);
@@ -44,7 +52,7 @@ public class CosmeticService {
         List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
         });
 
-        CosmeticPageResponse response = CosmeticPageResponse.builder()
+        return CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
                 .size(request.getSize() == null ? 10 : request.getSize())
                 .start(jsonNode.path("start").asInt())
@@ -52,9 +60,37 @@ public class CosmeticService {
                 .content(cosmeticResponses)
                 .build();
 
-        log.info("화장품 검색 결과 === {}", response);
-        return response;
+    }
 
+    public CosmeticPageResponse searchPersonalCosmetics(Long memberId, CosmeticPersonal request) throws JsonProcessingException {
+        Member member = memberRepository.findById(memberId).orElseThrow(UserNotFound::new);
+
+        PersonalResult personalResults = memberRepository.getPersonalResults(member);
+
+        // 퍼스널컬러, 타입, 트러블에 맞는 화장품 검색
+        ResponseEntity<String> exchange = getStringResponseEntity(CosmeticPersonalRequest.builder()
+                .type(personalResults.getType())
+                .personalColor(personalResults.getPersonalColor())
+                .trouble(personalResults.getTrouble())
+                .category(request.getCategory())
+                .size(request.getSize())
+                .sort(request.getSort())
+                .build());
+
+        // DTO로 변환
+        objectMapper.readTree(exchange.getBody());
+        JsonNode items = objectMapper.readTree(exchange.getBody()).path("items");
+
+        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
+        });
+
+        return CosmeticPageResponse.builder()
+                .total(objectMapper.readTree(exchange.getBody()).path("total").asLong())
+                .size(request.getSize() == null ? 10 : request.getSize())
+                .start(objectMapper.readTree(exchange.getBody()).path("start").asInt())
+                .display(objectMapper.readTree(exchange.getBody()).path("display").asInt())
+                .content(cosmeticResponses)
+                .build();
     }
 
     private ResponseEntity<String> getStringResponseEntity(CosmeticRequest request) {
@@ -63,7 +99,23 @@ public class CosmeticService {
         return getStringResponseEntity(uri);
     }
 
+    private ResponseEntity<String> getStringResponseEntity(CosmeticPersonalRequest request) {
+        URI uri = getUri(request);
+
+        return getStringResponseEntity(uri);
+    }
+
     private URI getUri(CosmeticRequest request) {
+
+        return UriComponentsBuilder.fromHttpUrl(url)
+                .queryParam("query", request.getQuery())
+                .queryParam("display", request.getSize() == null ? 10 : request.getSize())
+                .queryParam("start", request.getStart() == null ? 1 : request.getStart())
+                .queryParam("sort", request.getSort() == null ? "sim" : request.getSort())
+                .build().encode().toUri();
+    }
+
+    private URI getUri(CosmeticPersonalRequest request) {
 
         return UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("query", request.getQuery())
