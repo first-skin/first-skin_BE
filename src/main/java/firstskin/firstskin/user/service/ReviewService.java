@@ -5,6 +5,7 @@ import firstskin.firstskin.review.domain.Review;
 import firstskin.firstskin.review.domain.ReviewImage;
 import firstskin.firstskin.review.repository.ReviewImageRepository;
 import firstskin.firstskin.review.repository.ReviewRepository;
+import firstskin.firstskin.user.api.dto.ReviewResponseDto;
 import firstskin.firstskin.user.api.dto.UpdateReview;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewService {
@@ -40,12 +42,18 @@ public class ReviewService {
         this.reviewImageRepository = reviewImageRepository;
     }
 
-    public List<Review> getAllProductReviews(Long productId){
-        return reviewRepository.findByProductId(productId);
+    public List<ReviewResponseDto> getAllProductReviews(Long productId){
+        List<Review> reviews = reviewRepository.findByProductId(productId);
+        return reviews.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Review> getAllMemberReviews(Long memberId) {
-        return reviewRepository.findByMember_MemberId(memberId);
+    public List<ReviewResponseDto> getAllMemberReviews(Long memberId) {
+        List<Review> reviews = reviewRepository.findByMember_MemberId(memberId);
+        return reviews.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -68,7 +76,7 @@ public class ReviewService {
                 .orElseThrow(IllegalArgumentException::new);
 
         findReview.update(review.getContent(),review.getScore());
-
+        reviewRepository.save(findReview);
     }
 
     public void deleteReview(Long reviewId){
@@ -76,9 +84,12 @@ public class ReviewService {
 
     }
 
-    public List<Review> getAllReviewsSortedByScore(Long productId) {
-        return reviewRepository.findByProductId(productId, Sort.by(Sort.Direction.DESC, "score"));
-    }
+    public List<ReviewResponseDto> getAllReviewsSortedByScore(Long productId) {
+        List<Review> reviews = reviewRepository.findByProductId(productId, Sort.by(Sort.Direction.DESC, "score"));
+        return reviews.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        }
 
     private String saveImage(MultipartFile image) throws IOException {
         if (image.isEmpty()) {
@@ -107,5 +118,13 @@ public class ReviewService {
                 throw new IllegalStateException("디렉토리를 생성할 수 없습니다: " + path, e);
             }
         }
+    }
+    private ReviewResponseDto convertToDto(Review review) {
+        String nickname = review.getMember().getNickname();
+        List<ReviewImage> reviewImages = reviewImageRepository.findByReview(review);
+        List<String> reviewImageUrls = reviewImages.stream()
+                .map(ReviewImage::getReviewImageUrl)
+                .collect(Collectors.toList());
+        return new ReviewResponseDto(review.getContent(), review.getScore(), reviewImageUrls, nickname);
     }
 }

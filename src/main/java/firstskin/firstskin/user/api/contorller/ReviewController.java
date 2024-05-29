@@ -1,7 +1,7 @@
 package firstskin.firstskin.user.api.contorller;
 
 import firstskin.firstskin.member.domain.Member;
-import firstskin.firstskin.review.domain.Review;
+import firstskin.firstskin.user.api.dto.ReviewResponseDto;
 import firstskin.firstskin.user.api.dto.UpdateReview;
 import firstskin.firstskin.user.service.MemberService;
 import firstskin.firstskin.user.service.ReviewService;
@@ -30,16 +30,17 @@ public class ReviewController {
 
 
     @GetMapping("/{productId}")
-    public List<Review> getAllReviews(@PathVariable Long productId) {
+    public List<ReviewResponseDto> getAllReviews(@PathVariable Long productId) {
         return reviewService.getAllProductReviews(productId);
     }
 
     @GetMapping("/sorted/{productId}")
-    public List<Review> getAllReviewsSortedByScore(@PathVariable Long productId) {
+    public List<ReviewResponseDto> getAllReviewsSortedByScore(@PathVariable Long productId) {
         return reviewService.getAllReviewsSortedByScore(productId);
     }
-    @GetMapping("/members/{memberId}/reviews")
-    public List<Review> getAllMemberReviews(@PathVariable Long memberId) {
+    @GetMapping("/members")
+    public List<ReviewResponseDto> getAllMemberReviews(HttpSession session) {
+        Long memberId = (Long) session.getAttribute("memberId");
         return reviewService.getAllMemberReviews(memberId);
     }
 
