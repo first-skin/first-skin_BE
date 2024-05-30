@@ -88,6 +88,7 @@ public class CosmeticService {
                 .category(request.getCategory())
                 .size(request.getSize())
                 .sort(request.getSort())
+                .start(request.getStart())
                 .build());
 
         // DTO로 변환
