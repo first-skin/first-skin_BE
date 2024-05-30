@@ -19,7 +19,7 @@ public class CosmeticPersonalRequest {
         type = type == null ? "" : "피부타입: " + type + "%20";
         personalColor = personalColor == null ? "" : "퍼스널컬러: " + personalColor + "%20";
         trouble = trouble == null ? "" : "트러블: " + trouble + "%20";
-        this.query = type + "퍼스널컬러:" + personalColor + "트러블:" + trouble + category;
+        this.query = type + personalColor + trouble + category;
         this.size = size;
         this.sort = sort;
         this.start = Math.max((page == null ? 1 : page - 1) * size + 1, 1);

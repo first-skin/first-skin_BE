@@ -66,12 +66,25 @@ public class CosmeticService {
         Member member = memberRepository.findById(memberId).orElseThrow(UserNotFound::new);
 
         PersonalResult personalResults = memberRepository.getPersonalResults(member);
+        String personalColor;
+        String type;
+        String trouble;
+
+        if (personalResults == null) {
+            personalColor = null;
+            type = null;
+            trouble = null;
+        } else {
+            personalColor = personalResults.getPersonalColor();
+            type = personalResults.getType();
+            trouble = personalResults.getTrouble();
+        }
 
         // 퍼스널컬러, 타입, 트러블에 맞는 화장품 검색
         ResponseEntity<String> exchange = getStringResponseEntity(CosmeticPersonalRequest.builder()
-                .type(personalResults.getType())
-                .personalColor(personalResults.getPersonalColor())
-                .trouble(personalResults.getTrouble())
+                .type(type)
+                .personalColor(personalColor)
+                .trouble(trouble)
                 .category(request.getCategory())
                 .size(request.getSize())
                 .sort(request.getSort())
