@@ -65,7 +65,9 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .where(diagnosis.member.eq(member))
                 .fetch();
 
-        System.out.println("fetch = " + fetch);
+        if(fetch.isEmpty()) {
+            return null;
+        }
 
         return fetch.get(0);
     }
