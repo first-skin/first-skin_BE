@@ -4,14 +4,12 @@ import firstskin.firstskin.common.entity.BaseTimeEntity;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.skin.Skin;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
 public class Diagnosis extends BaseTimeEntity {
 
     @Id

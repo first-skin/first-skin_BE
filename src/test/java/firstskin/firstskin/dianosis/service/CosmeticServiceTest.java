@@ -50,7 +50,7 @@ class CosmeticServiceTest {
         CosmeticPersonal cosmeticPersonal = new CosmeticPersonal("로션", 1, 10, "sim");
 
         //when
-        CosmeticPageResponse cosmeticPageResponse = cosmeticService.searchPersonalCosmetics(savedMember.getMemberId(), cosmeticPersonal);
+         CosmeticPageResponse cosmeticPageResponse = cosmeticService.searchPersonalCosmetics(savedMember.getMemberId(), cosmeticPersonal);
 
         //then
 

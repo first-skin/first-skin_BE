@@ -26,7 +26,7 @@ public class ModelPathResolver {
     private String troublePattern;
 
     @Value("${model.personal_color}")
-    private String personalPath;
+    private String personalColorPath;
 
     @Value("${model.personal_color_pattern}")
     private String personalColorPattern;
@@ -55,6 +55,6 @@ public class ModelPathResolver {
     }
 
     public String resolvePersonalColorModelPath() {
-        return resolveModelPath(personalPath, personalColorPattern);
+        return resolveModelPath(personalColorPath, personalColorPattern);
     }
 }
