@@ -49,7 +49,7 @@ import java.util.UUID;
 public class DiagnosisService {
 
     private final String[] typeLabels = {"dry", "normal", "oily"};
-    private final String[] troubleLabels = {"normal", "trouble"};
+    private final String[] troubleLabels = {"normal", "acne", "redness"};
 
     private final String[] personalColorLabels = {"fall", "spring", "summer", "winter"};
 
@@ -72,7 +72,6 @@ public class DiagnosisService {
 
     private SavedModelBundle typeModel;
     private SavedModelBundle troubleModel;
-    private SavedModelBundle detectTroubleModel;
     private SavedModelBundle personalColorModel;
 
     @PostConstruct
@@ -83,7 +82,6 @@ public class DiagnosisService {
 
         typeModel = SavedModelBundle.load(typeModelPath, "serve");
         troubleModel = SavedModelBundle.load(troubleModelPath, "serve");
-        detectTroubleModel = SavedModelBundle.load(detectTroubleModelPath, "serve");
         personalColorModel = SavedModelBundle.load(personalColorModelPath, "serve");
     }
 
@@ -121,45 +119,17 @@ public class DiagnosisService {
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
             result = (TFloat32) troubleModel.session().runner()
-                    .feed("serving_default_input_6", preprocessedImage)
+                    .feed("serving_default_input_5", preprocessedImage)
                     .fetch("StatefulPartitionedCall:0")
                     .run().get(0);
 
             FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
             result.copyTo(floatNdArray);
-            float[] resultArray = new float[2];
+            float[] resultArray = new float[3];
             floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
 
             int maxIndex = argMax(resultArray);
             resultLabel = troubleLabels[maxIndex];
-
-            if (resultLabel.equals("trouble")) {
-                // 트러블이면 여드름/홍조 구분
-                TFloat32 troubleResultDetail = (TFloat32) detectTroubleModel.session().runner()
-                        .feed("serving_default_input_6", preprocessedImage)
-                        .fetch("StatefulPartitionedCall:1")
-                        .run().get(0);
-
-                FloatNdArray troubleDetailFloatNdArray = NdArrays.ofFloats(troubleResultDetail.shape());
-                troubleResultDetail.copyTo(troubleDetailFloatNdArray);
-                float[] troubleDetailResultArray = new float[2];
-                troubleDetailFloatNdArray.scalars().forEachIndexed((idx, flt) -> troubleDetailResultArray[(int) idx[1]] = flt.getFloat());
-
-                int detectTroubleMaxIndex = argMax(troubleDetailResultArray);
-                resultLabel = detectTroubleMaxIndex == 0 ? "acne" : "redness";
-
-                // 트러블 위치 진단
-                TFloat32 detectTroubleResult = (TFloat32) detectTroubleModel.session().runner()
-                        .feed("serving_default_input_6", preprocessedImage)
-                        .fetch("StatefulPartitionedCall:0")
-                        .run().get(0);
-
-                FloatNdArray detectTroubleFloatNdArray = NdArrays.ofFloats(detectTroubleResult.shape());
-                detectTroubleResult.copyTo(detectTroubleFloatNdArray);
-                float[] detectTroubleResultArray = new float[4];
-                detectTroubleFloatNdArray.scalars().forEachIndexed((idx, flt) -> detectTroubleResultArray[(int) idx[1]] = flt.getFloat());
-
-            }
 
             updateTroubleCsvFile(maxIndex, filePath);
 
