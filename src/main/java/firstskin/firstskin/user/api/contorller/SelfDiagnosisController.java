@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -24,11 +25,10 @@ public class SelfDiagnosisController {
 
 
     @GetMapping()
-    public SelfDiagnosisDto getDiagnosisByDate(HttpSession session, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    public List<SelfDiagnosisDto> getDiagnosisByDate(HttpSession session, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         Long memberId = (Long) session.getAttribute("memberId");
         Optional<Member> member = memberService.findMemberById(memberId);
-        Optional<SelfDiagnosisDto> optionalDiagnosis = diagnosisService.getDiagnosisByDate(member, date);
-        return optionalDiagnosis.orElse(null);
+        return diagnosisService.getDiagnosisByDate(member, date);
     }
 
 
