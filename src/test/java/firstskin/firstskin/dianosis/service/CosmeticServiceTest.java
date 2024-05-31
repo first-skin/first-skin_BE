@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class CosmeticServiceTest {
@@ -32,6 +33,7 @@ class CosmeticServiceTest {
 
     @Test
     @DisplayName("화장품 검색 테스트 개인별로 하면 결과 나옴")
+    @Transactional
     public void searchPersonalCosmetics() throws Exception{
         //given
         Member member = new Member(Role.ROLE_USER, "프ㅡㅡ로필", "userisd", "niasdhn");
@@ -51,6 +53,10 @@ class CosmeticServiceTest {
 
         //when
          CosmeticPageResponse cosmeticPageResponse = cosmeticService.searchPersonalCosmetics(savedMember.getMemberId(), cosmeticPersonal);
+
+         cosmeticPageResponse.getContent().forEach(cosmeticResponse -> {
+             System.out.println("cosmeticResponse = " + cosmeticResponse);
+         });
 
         //then
 

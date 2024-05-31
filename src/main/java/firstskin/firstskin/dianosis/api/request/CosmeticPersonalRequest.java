@@ -14,11 +14,14 @@ public class CosmeticPersonalRequest {
     private Integer start; // 검색 시작 위치
 
     @Builder
-    public CosmeticPersonalRequest(String type, String personalColor, String trouble, String category, Integer page, Integer size, String sort) {
+    public CosmeticPersonalRequest(String type, String personalColor, String trouble, String category, Integer start, Integer size, String sort) {
         size = size == null ? 10 : size;
-        this.query = "피부타입:" + type + "%20" + "퍼스널컬러:" + personalColor + "%20" + "트러블:" + trouble + "%20" + category;
+        type = type == null ? "" : "피부타입: " + type + "%20";
+        personalColor = personalColor == null ? "" : "퍼스널컬러: " + personalColor + "%20";
+        trouble = trouble == null ? "" : "트러블: " + trouble + "%20";
+        this.query = type + personalColor + trouble + category;
         this.size = size;
         this.sort = sort;
-        this.start = Math.max((page == null ? 1 : page - 1) * size + 1, 1);
+        this.start = start;
     }
 }

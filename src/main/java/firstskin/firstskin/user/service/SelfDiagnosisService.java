@@ -7,10 +7,9 @@ import firstskin.firstskin.member.repository.MemberRepository;
 import firstskin.firstskin.skin.Kind;
 import firstskin.firstskin.skin.Skin;
 import firstskin.firstskin.user.api.dto.SelfDiagnosisDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 
-
+@Slf4j
 @Service
 public class SelfDiagnosisService {
 
@@ -52,7 +51,7 @@ public class SelfDiagnosisService {
     }
     private SelfDiagnosisDto SelfConvertToDto(Diagnosis diagnosis) {
         Skin skin = diagnosis.getSkin();
-        System.out.println(skin.getSkinId()+"+"+skin.getKind().getDescription());
+        log.info("skin.getKind().getDescription() = {}", skin.getKind().getDescription());
 
         return new SelfDiagnosisDto(skin.getKind().getDescription(), skin.getResult(), diagnosis.getSkinPictureUrl());
     }
