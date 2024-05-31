@@ -35,7 +35,6 @@ public class RestudyService {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    log.info("재학습 로그: {}", line);
                     completeLog.append(line).append("\n");
 
                     // 마지막 두 줄을 추적
@@ -54,9 +53,10 @@ public class RestudyService {
         } catch (IOException | InterruptedException exception) {
             log.error("재학습 실패", exception);
             throw new InternalError("서버 오류로 인한 재학습 실패.");
+        }finally {
+            log.info("재학습 전체 로그: \n{}", completeLog);
+            log.info("재학습 종료");
         }
-
-        log.info("재학습 전체 로그: \n{}", completeLog);
 
         // 로그의 마지막 두 줄에서 before, after 값을 추출하고 결과 메시지 생성
         Double before = null;
