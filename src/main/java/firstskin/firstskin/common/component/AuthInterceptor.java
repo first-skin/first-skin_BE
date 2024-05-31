@@ -76,10 +76,10 @@ public class AuthInterceptor implements HandlerInterceptor {
                 Role requiredRole = entry.getValue().get(method);
                 if (requiredRole != null && !memberService.hasRole(request, requiredRole)) {
                     if (requiredRole == ROLE_USER) {
-                        log.error("{}로의 접근은 로그인이 필요합니다.", requestURI);
+                        log.error("로그인이 필요합니다");
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
                     } else {
-                        log.error("{}로의 접근은 관리자 권한이 필요합니다.", requestURI);
+                        log.error("관리자 권한이 필요합니다");
                         response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
                     }
                     return false;
