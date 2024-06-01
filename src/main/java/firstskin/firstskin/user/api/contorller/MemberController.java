@@ -57,6 +57,19 @@ public class MemberController {
         }
     }
 
+    @PostMapping("/admin/login")
+    public String loginAdmin(@RequestParam String userId, @RequestParam String password, HttpServletRequest request) {
+        boolean isAuthenticated = memberService.authenticateAdmin(userId, password);
+
+        if (isAuthenticated) {
+            Member member = memberService.findMemberByUserId(userId);
+            HttpSession session = memberService.sessionSave(request, member);
+            return "Admin login successful. Session ID: " + session.getId();
+        } else {
+            return "Invalid user ID or password";
+        }
+    }
+
     @GetMapping("/logout-kakao")
     public ResponseEntity<String> logoutKakao(HttpServletRequest request) {
         String accessToken = (String) request.getSession().getAttribute("access_token");
@@ -64,6 +77,8 @@ public class MemberController {
         memberService.logoutRequest(accessToken);
 
         HttpSession session = request.getSession(false);
+
+
         if (session != null) {
             log.info("로그아웃 memberId: {}", session.getAttribute("memberId"));
             session.invalidate();
@@ -71,6 +86,18 @@ public class MemberController {
 
         return ResponseEntity.status(HttpStatus.OK).body("Logged-out-successfully");
 
+    }
+
+
+    @GetMapping("/admin/logout")
+    public ResponseEntity<String> logoutAdmin(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+            return ResponseEntity.status(HttpStatus.OK).body("Logged-out-successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed-to-logout: No active session found");
+        }
     }
 
     @GetMapping("/members")
