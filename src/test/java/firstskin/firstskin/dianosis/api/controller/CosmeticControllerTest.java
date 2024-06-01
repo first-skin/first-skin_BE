@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.transaction.annotation.Transactional;
 
+import static firstskin.firstskin.skin.Kind.PERSONAL_COLOR;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -87,6 +88,22 @@ class CosmeticControllerTest {
                         .param("page", "1")
                         .param("query", "지성")
                         .param("kind", "TYPE"))
+                .andDo(MockMvcResultHandlers.print());
+    }
+
+    @Test
+    @DisplayName("화장품 검색 퍼컬")
+    public void searchCosmetic퍼컬() throws Exception{
+        //given
+
+        //expected
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/cosmetics")
+                        .param("size", "10")
+                        .param("sort", "asc")
+                        .param("category", "립/틴트")
+                        .param("page", "1")
+                        .param("query", "봄 웜톤")
+                        .param("kind", PERSONAL_COLOR.name()))
                 .andDo(MockMvcResultHandlers.print());
     }
 
