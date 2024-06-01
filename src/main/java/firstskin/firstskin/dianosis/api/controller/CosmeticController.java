@@ -5,6 +5,7 @@ import firstskin.firstskin.common.exception.UnauthorizedException;
 import firstskin.firstskin.dianosis.api.request.CosmeticPersonal;
 import firstskin.firstskin.dianosis.api.request.CosmeticRequest;
 import firstskin.firstskin.dianosis.api.response.CosmeticPageResponse;
+import firstskin.firstskin.dianosis.api.response.PersonalResult;
 import firstskin.firstskin.dianosis.service.CosmeticService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -45,5 +46,21 @@ public class CosmeticController {
         log.info("화장품 검색 memberId : {}", memberId);
         return cosmeticService.searchPersonalCosmetics(memberId, request);
 
+    }
+
+    @GetMapping("/personal/results")
+    public PersonalResult getPersonalResults(HttpSession session) {
+
+        if (session == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+
+        Long memberId = (Long) session.getAttribute("memberId");
+
+        if (memberId == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+
+        return cosmeticService.getPersonalResults(memberId);
     }
 }

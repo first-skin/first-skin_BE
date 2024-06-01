@@ -151,4 +151,9 @@ public class CosmeticService {
 
         return restTemplate.exchange(req, String.class);
     }
+
+    public PersonalResult getPersonalResults(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(UserNotFound::new);
+        return memberRepository.getPersonalResults(member);
+    }
 }
