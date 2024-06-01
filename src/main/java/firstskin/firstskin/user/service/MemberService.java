@@ -170,12 +170,15 @@ public class MemberService {
         HttpSession session = httpServletRequest.getSession(true);
         session.setAttribute("memberId", member.getMemberId());
         session.setAttribute("access_token", oauthToken.getAccess_token());
+        session.setAttribute("role", member.getRole());
         session.setMaxInactiveInterval(3600);
         log.info("세션 저장 완료. memberId: {}", member.getMemberId());
         log.info("저장된 memberId 세션: {}", session.getAttribute("memberId"));
+        log.info("저장된 member Role 세션: {}", session.getAttribute("role"));
         return session;
     }
 
+<<<<<<< admin-login -- Incoming Change
     public HttpSession sessionSave(HttpServletRequest httpServletRequest, Member member) {
         httpServletRequest.getSession().invalidate();
         HttpSession session = httpServletRequest.getSession(true);
@@ -186,6 +189,15 @@ public class MemberService {
         log.info("저장된 관리자 memberId 세션: {}", session.getAttribute("memberId"));
         log.info("저장된 관리자 member Role 세션: {}", session.getAttribute("role"));
         return session;
+=======
+    public boolean hasRole(HttpServletRequest request, Role role) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return false;
+        }
+        Role sessionRole = (Role) session.getAttribute("role");
+        return role.equals(sessionRole);
+>>>>>>> dev -- Current Change
     }
 
 
