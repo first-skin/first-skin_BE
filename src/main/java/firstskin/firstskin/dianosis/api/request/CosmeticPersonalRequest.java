@@ -17,9 +17,9 @@ public class CosmeticPersonalRequest {
     public CosmeticPersonalRequest(String type, String personalColor, String trouble, String category, Integer start, Integer size, String sort) {
         size = size == null ? 10 : size;
         type = type == null ? "" : "피부타입: " + type + "%20";
-        personalColor = personalColor == null ? "" : "퍼스널컬러: " + personalColor + "%20";
+        personalColor = personalColor == null ? "" : personalColor + "%20";
         trouble = trouble == null ? "" : "트러블: " + trouble + "%20";
-        this.query = type + personalColor + trouble + category;
+        this.query = type + personalColor + trouble + category + "%20화장품";
         this.size = size;
         this.sort = sort;
         this.start = start;
