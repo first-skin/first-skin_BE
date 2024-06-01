@@ -72,7 +72,8 @@ class DiagnosisControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/skin/diagnosis")
                         .file(file)
                         .param("kind", Kind.TYPE.name())
-                        .sessionAttr("memberId", findMember.getMemberId()))
+                        .sessionAttr("memberId", findMember.getMemberId())
+                        .sessionAttr("role", findMember.getRole()))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk());
     }

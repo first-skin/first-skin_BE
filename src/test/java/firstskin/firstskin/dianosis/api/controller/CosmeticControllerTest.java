@@ -67,7 +67,8 @@ class CosmeticControllerTest {
                         .param("sort", "asc")
                         .param("category", "클렌징")
                         .param("page", "2")
-                        .sessionAttr("memberId", savedMember.getMemberId()))
+                        .sessionAttr("memberId", savedMember.getMemberId())
+                        .sessionAttr("role", savedMember.getRole()))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk());
 
