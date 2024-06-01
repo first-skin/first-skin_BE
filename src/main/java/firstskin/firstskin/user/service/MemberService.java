@@ -39,6 +39,16 @@ public class MemberService {
         this.objectMapper = objectMapper;
     }
 
+    public boolean authenticateAdmin(String userId, String password) {
+        List<Member> adminMembers = memberRepository.findByRole(Role.ROLE_ADMIN);
+        for (Member member : adminMembers) {
+            if (member.getUserId().equals(userId) && member.getName().equals(password) && member.isActivated()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public Member findMemberByUserId(String userId){
         return memberRepository.findByUserId(userId);
@@ -168,6 +178,18 @@ public class MemberService {
         return session;
     }
 
+<<<<<<< admin-login -- Incoming Change
+    public HttpSession sessionSave(HttpServletRequest httpServletRequest, Member member) {
+        httpServletRequest.getSession().invalidate();
+        HttpSession session = httpServletRequest.getSession(true);
+        session.setAttribute("memberId", member.getMemberId());
+        session.setAttribute("role", member.getRole());
+        session.setMaxInactiveInterval(3600);
+        log.info("관리자 세션 저장 완료. memberId: {}", member.getMemberId());
+        log.info("저장된 관리자 memberId 세션: {}", session.getAttribute("memberId"));
+        log.info("저장된 관리자 member Role 세션: {}", session.getAttribute("role"));
+        return session;
+=======
     public boolean hasRole(HttpServletRequest request, Role role) {
         HttpSession session = request.getSession(false);
         if (session == null) {
@@ -175,6 +197,7 @@ public class MemberService {
         }
         Role sessionRole = (Role) session.getAttribute("role");
         return role.equals(sessionRole);
+>>>>>>> dev -- Current Change
     }
 
 
