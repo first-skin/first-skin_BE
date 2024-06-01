@@ -5,6 +5,8 @@ import firstskin.firstskin.dianosis.domain.Diagnosis;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.member.domain.Role;
 import firstskin.firstskin.member.repository.MemberRepository;
+import firstskin.firstskin.review.domain.Review;
+import firstskin.firstskin.review.repository.ReviewRepository;
 import firstskin.firstskin.skin.Kind;
 import firstskin.firstskin.skin.Skin;
 import firstskin.firstskin.skin.repository.SkinRepository;
@@ -37,6 +39,9 @@ class CosmeticControllerTest {
     @Autowired
     private DiagnosisRepository diagnosisRepository;
 
+    @Autowired
+    private ReviewRepository reviewRepository;
+
     @Test
     @DisplayName("개인별 화장품 검색 테슽트")
     @Transactional
@@ -58,8 +63,11 @@ class CosmeticControllerTest {
                 .build();
         Diagnosis saveDiagnosis = diagnosisRepository.save(build);
 
+        Review 좋아용 = new Review(savedMember, 82730935242L, "좋아용", 4, true);
+        Review 좋아용1 = new Review(savedMember, 82730935242L, "좋아용", 3, true);
 
-
+        reviewRepository.save(좋아용);
+        reviewRepository.save(좋아용1);
         //when
 
         //then

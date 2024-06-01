@@ -13,6 +13,7 @@ import firstskin.firstskin.dianosis.api.response.CosmeticResponse;
 import firstskin.firstskin.dianosis.api.response.PersonalResult;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.member.repository.MemberRepository;
+import firstskin.firstskin.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,7 @@ public class CosmeticService {
     private final ObjectMapper objectMapper;
 
     private final MemberRepository memberRepository;
+    private final ReviewRepository reviewRepository;
 
     public CosmeticPageResponse searchCosmetics(CosmeticRequest request) throws JsonProcessingException {
 
@@ -51,6 +53,11 @@ public class CosmeticService {
 
         List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
         });
+
+        cosmeticResponses
+                .forEach(cosmeticResponse -> {
+                    cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
+                });
 
         return CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
@@ -97,6 +104,11 @@ public class CosmeticService {
 
         List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
         });
+
+        cosmeticResponses
+                .forEach(cosmeticResponse -> {
+                    cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
+                });
 
         return CosmeticPageResponse.builder()
                 .total(objectMapper.readTree(exchange.getBody()).path("total").asLong())

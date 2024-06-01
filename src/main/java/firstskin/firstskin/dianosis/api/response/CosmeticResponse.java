@@ -1,19 +1,18 @@
 package firstskin.firstskin.dianosis.api.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @ToString
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CosmeticResponse {
 
-    private final String title;
-    private final String link;
-    private final String image;
-    private final int lprice;
-    private final long productId;
-    private final String brand;
+    private String title;
+    private String link;
+    private String image;
+    private int lprice;
+    private long productId;
+    private String brand;
 
     private Double score;
 
@@ -25,6 +24,10 @@ public class CosmeticResponse {
         this.lprice = lprice;
         this.productId = productId;
         this.brand = brand;
+        this.score = score;
+    }
+
+    public void setScore(Double score) {
         this.score = score;
     }
 }
