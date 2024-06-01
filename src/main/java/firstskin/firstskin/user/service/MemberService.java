@@ -3,6 +3,7 @@ package firstskin.firstskin.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import firstskin.firstskin.member.domain.Member;
+import firstskin.firstskin.member.domain.Role;
 import firstskin.firstskin.member.repository.MemberRepository;
 import firstskin.firstskin.model.KakaoProfile;
 import firstskin.firstskin.model.OauthToken;
@@ -36,6 +37,16 @@ public class MemberService {
     public MemberService(MemberRepository memberRepository, ObjectMapper objectMapper) {
         this.memberRepository = memberRepository;
         this.objectMapper = objectMapper;
+    }
+
+    public boolean authenticateAdmin(String userId, String password) {
+        List<Member> adminMembers = memberRepository.findByRole(Role.ROLE_ADMIN);
+        for (Member member : adminMembers) {
+            if (member.getUserId().equals(userId) && member.getName().equals(password) && member.isActivated()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -162,6 +173,16 @@ public class MemberService {
         session.setMaxInactiveInterval(3600);
         log.info("세션 저장 완료. memberId: {}", member.getMemberId());
         log.info("저장된 memberId 세션: {}", session.getAttribute("memberId"));
+        return session;
+    }
+
+    public HttpSession sessionSave(HttpServletRequest httpServletRequest, Member member) {
+        httpServletRequest.getSession().invalidate();
+        HttpSession session = httpServletRequest.getSession(true);
+        session.setAttribute("memberId", member.getMemberId());
+        session.setMaxInactiveInterval(3600);
+        log.info("관리자 세션 저장 완료. memberId: {}", member.getMemberId());
+        log.info("저장된 관리자 memberId 세션: {}", session.getAttribute("memberId"));
         return session;
     }
 
