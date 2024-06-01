@@ -1,6 +1,7 @@
 package firstskin.firstskin.admin.api.controller;
 
 import firstskin.firstskin.admin.api.dto.request.RestudyRequest;
+import firstskin.firstskin.admin.api.dto.response.RestudyResponse;
 import firstskin.firstskin.admin.service.RestudyService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,8 @@ public class RestudyController {
 
     @PostMapping
     @Operation(summary = "재학습")
-    public void restudy(@RequestBody RestudyRequest request) {
-        restudyService.restudy(request);
+    public RestudyResponse restudy(@RequestBody RestudyRequest request) {
+
+        return restudyService.restudy(request);
     }
 }
