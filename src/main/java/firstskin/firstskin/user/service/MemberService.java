@@ -180,9 +180,11 @@ public class MemberService {
         httpServletRequest.getSession().invalidate();
         HttpSession session = httpServletRequest.getSession(true);
         session.setAttribute("memberId", member.getMemberId());
+        session.setAttribute("role", member.getRole());
         session.setMaxInactiveInterval(3600);
         log.info("관리자 세션 저장 완료. memberId: {}", member.getMemberId());
         log.info("저장된 관리자 memberId 세션: {}", session.getAttribute("memberId"));
+        log.info("저장된 관리자 member Role 세션: {}", session.getAttribute("role"));
         return session;
     }
 
