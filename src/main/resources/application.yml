@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: first-skin
+  profiles:
+    active: dev
+  output:
+    ansi:
+      enabled: always
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+logging:
+  level:
+    org.hibernate.sql: info
+    org.hibernate.type: trace
+  messages:
+    basename: errors
+  file:
+    path: /home/t24122/logs
+  config: classpath:logback-spring.xml
+
+pagination:
+  size: 20

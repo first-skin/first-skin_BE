@@ -1,0 +1,3 @@
+[submodule "secure-submodule"]
+	path = secure-submodule
+	url = https://github.com/first-skin/secure-submodule.git
