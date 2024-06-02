@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
+import static firstskin.firstskin.skin.Kind.PERSONAL_COLOR;
+
 @Getter
 @ToString
 public class CosmeticRequest {
@@ -19,8 +21,11 @@ public class CosmeticRequest {
     public CosmeticRequest(Kind kind, String category, String query, Integer page, Integer size, String sort) {
         size = size == null ? 10 : size;
         this.kind = kind;
-        String kindName = kind == null ? "" : kind.getDescription();
-        this.query = kindName + ":" + query + "%20" + category;
+        String kindName = kind == null ? "" : kind.getDescription() + ":";
+        if (kind == PERSONAL_COLOR) {
+            kindName = "";
+        }
+        this.query = kindName + query + "%20" + category + "%20화장품/미용";
         this.size = size;
         this.sort = sort;
         this.start = Math.max((page == null ? 1 : page - 1) * size + 1, 1);

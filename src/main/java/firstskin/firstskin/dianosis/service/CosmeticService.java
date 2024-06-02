@@ -13,6 +13,7 @@ import firstskin.firstskin.dianosis.api.response.CosmeticResponse;
 import firstskin.firstskin.dianosis.api.response.PersonalResult;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.member.repository.MemberRepository;
+import firstskin.firstskin.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,18 +40,23 @@ public class CosmeticService {
     private final ObjectMapper objectMapper;
 
     private final MemberRepository memberRepository;
+    private final ReviewRepository reviewRepository;
 
     public CosmeticPageResponse searchCosmetics(CosmeticRequest request) throws JsonProcessingException {
 
         ResponseEntity<String> exchange = getStringResponseEntity(request);
-//        log.info("네이버 쇼핑 API 응답 === {}", exchange.getBody());
 
         // DTO로 변환
         JsonNode jsonNode = objectMapper.readTree(exchange.getBody());
         JsonNode items = jsonNode.path("items");
 
-        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
+        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items
+                .toString(), new TypeReference<>() {
         });
+
+        cosmeticResponses
+                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository
+                        .findAvgScoreByProductId(cosmeticResponse.getProductId())));
 
         return CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
@@ -97,6 +103,9 @@ public class CosmeticService {
 
         List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
         });
+
+        cosmeticResponses
+                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId())));
 
         return CosmeticPageResponse.builder()
                 .total(objectMapper.readTree(exchange.getBody()).path("total").asLong())
@@ -150,5 +159,10 @@ public class CosmeticService {
 
 
         return restTemplate.exchange(req, String.class);
+    }
+
+    public PersonalResult getPersonalResults(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(UserNotFound::new);
+        return memberRepository.getPersonalResults(member);
     }
 }

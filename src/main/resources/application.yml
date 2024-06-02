@@ -26,6 +26,9 @@ logging:
     org.hibernate.type: trace
   messages:
     basename: errors
+  file:
+    path: /home/t24122/logs
+  config: classpath:logback-spring.xml
 
 pagination:
   size: 20

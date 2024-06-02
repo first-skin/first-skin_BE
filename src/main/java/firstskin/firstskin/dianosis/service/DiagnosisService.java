@@ -2,6 +2,8 @@ package firstskin.firstskin.dianosis.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import firstskin.firstskin.common.component.ModelPathResolver;
+import firstskin.firstskin.common.constants.DfPath;
+import firstskin.firstskin.common.constants.Operation;
 import firstskin.firstskin.common.exception.FileNotFound;
 import firstskin.firstskin.common.exception.MissMatchType;
 import firstskin.firstskin.common.exception.UserNotFound;
@@ -41,6 +43,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -98,15 +101,11 @@ public class DiagnosisService {
         if (request.getKind().equals(Kind.TYPE)) {
             // 피부 타입 진단
             result = (TFloat32) typeModel.session().runner()
-                    .feed("serving_default_input_17", preprocessedImage)
-                    .fetch("StatefulPartitionedCall:0")
+                    .feed(Operation.TYPE_INPUT, preprocessedImage)
+                    .fetch(Operation.TYPE_OUTPUT)
                     .run().get(0);
 
-            FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
-
-            result.copyTo(floatNdArray);
-            float[] resultArray = new float[3];
-            floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+            float[] resultArray = getFloats(result, 3);
 
             int maxIndex = argMax(resultArray);
             resultLabel = typeLabels[maxIndex];
@@ -116,14 +115,11 @@ public class DiagnosisService {
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
             result = (TFloat32) troubleModel.session().runner()
-                    .feed("serving_default_input_5", preprocessedImage)
-                    .fetch("StatefulPartitionedCall:0")
+                    .feed(Operation.TROUBLE_INPUT, preprocessedImage)
+                    .fetch(Operation.TROUBLE_OUTPUT)
                     .run().get(0);
 
-            FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
-            result.copyTo(floatNdArray);
-            float[] resultArray = new float[3];
-            floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+            float[] resultArray = getFloats(result, 3);
 
             int maxIndex = argMax(resultArray);
             resultLabel = troubleLabels[maxIndex];
@@ -145,17 +141,13 @@ public class DiagnosisService {
                 hsvArrayInt[0][i] = (int) hsvArray[0][i];
             }
 
-            // 퍼스널 컬러 모델 돌리자
+            // 퍼스널 컬러 모델 진단
             result = (TFloat32) personalColorModel.session().runner()
-                    .feed("serving_default_dense_3_input:0", TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArrayInt).shape()))
-                    .fetch("StatefulPartitionedCall:0")
+                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArrayInt).shape()))
+                    .fetch(Operation.PERSONAL_COLOR_OUTPUT)
                     .run().get(0);
 
-            FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
-
-            result.copyTo(floatNdArray);
-            float[] resultArray = new float[4];
-            floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+            float[] resultArray = getFloats(result, 4);
 
             int maxIndex = argMax(resultArray);
             resultLabel = personalColorLabels[maxIndex];
@@ -182,6 +174,15 @@ public class DiagnosisService {
         diagnosisRepository.save(diagnosisResult);
 
         return new DiagnosisResponse(resultLabel);
+    }
+
+    private static float[] getFloats(TFloat32 result, int x) {
+        FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
+
+        result.copyTo(floatNdArray);
+        float[] resultArray = new float[x];
+        floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+        return resultArray;
     }
 
     private double[][] detectFaceForPersonalColor(String filePath) throws Exception {
@@ -253,7 +254,7 @@ public class DiagnosisService {
 
         // 이미지 파일이 아닐 경우 예외
         List<String> allowedContentType = Arrays.asList("png", "jpeg", "jpg");
-        if (!allowedContentType.contains(request.getFile().getOriginalFilename().split("\\.")[1]))
+        if (!allowedContentType.contains(Objects.requireNonNull(request.getFile().getOriginalFilename()).split("\\.")[1]))
             throw new MissMatchType("이미지 파일만 업로드 가능합니다.");
 
         MultipartFile file = request.getFile();
@@ -406,9 +407,7 @@ public class DiagnosisService {
     private void isAlreadyExist(int labelIndex, String filePath, Path csvFile) {
         boolean fileAlreadyExists = Files.exists(csvFile);
 
-        CSVFormat format = fileAlreadyExists ?
-                CSVFormat.DEFAULT :
-                CSVFormat.DEFAULT.builder().build();
+        CSVFormat format = getCsvFormat(fileAlreadyExists);
 
         try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
@@ -422,38 +421,43 @@ public class DiagnosisService {
     private void isAlreadyExist(int labelIndex, String filePath, Path csvFile, int[] hsvArray) {
         boolean fileAlreadyExists = Files.exists(csvFile);
 
-        CSVFormat format = fileAlreadyExists ?
-                CSVFormat.DEFAULT :
-                CSVFormat.DEFAULT.builder().build();
+        CSVFormat format = getCsvFormat(fileAlreadyExists);
 
         try (BufferedWriter writer = Files.newBufferedWriter(csvFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
-            csvPrinter.printRecord(filePath, hsvArray[0], hsvArray[1], hsvArray[2], hsvArray[3], hsvArray[4], hsvArray[5], hsvArray[6], hsvArray[7], hsvArray[8], labelIndex);
+            csvPrinter.printRecord(filePath, hsvArray[0], hsvArray[1], hsvArray[2], hsvArray[3],
+                    hsvArray[4], hsvArray[5], hsvArray[6], hsvArray[7], hsvArray[8], labelIndex);
             csvPrinter.flush();
         } catch (IOException e) {
             throw new RuntimeException("csv 저장 실패");
         }
     }
 
+    private static CSVFormat getCsvFormat(boolean fileAlreadyExists) {
+        return fileAlreadyExists ?
+                CSVFormat.DEFAULT :
+                CSVFormat.DEFAULT.builder().build();
+    }
+
     private Path getTypeCsvFilePath() {
         // 폴더가 존재하지 않으면 생성
         typeMakeDirIfNotExist();
 
-        return Paths.get(uploadDir, "skintype/skintype_df.csv");
+        return Paths.get(uploadDir, DfPath.TYPE_PATH);
     }
 
     private Path getTroubleCsvFilePath() {
         // 폴더가 존재하지 않으면 생성
         troubleMakeDirIfNotExist();
 
-        return Paths.get(uploadDir, "skintrouble/skintrouble_df.csv");
+        return Paths.get(uploadDir, DfPath.TROUBLE_PATH);
     }
 
     private Path getPersonalColorCsvFilePath() {
         // 폴더가 존재하지 않으면 생성
         personalColorMakeDirIfNotExist();
 
-        return Paths.get(uploadDir, "personal_color/personalcolor_df.csv");
+        return Paths.get(uploadDir, DfPath.PERSONAL_COLOR_PATH);
     }
 
     private void typeMakeDirIfNotExist() {

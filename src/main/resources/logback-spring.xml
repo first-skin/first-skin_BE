@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Spring Boot의 프로퍼티 값을 참조 -->
+    <springProperty name="LOG_FILE_PATH" source="logging.file.path" defaultValue="/default/path/to/logs"/>
+
+    <!-- 컬러 패턴 레이아웃 정의 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+
+    <!-- 콘솔에 로그 출력, 색상 추가 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} [%thread] %highlight(%-5level){TRACE=blue,DEBUG=green,INFO=cyan,WARN=yellow,ERROR=red} %clr(%logger{36}){magenta} - %msg%n%wex</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 파일에 로그 출력, 매일 자정에 로그 파일 분할 -->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 로그 파일의 이름 형식 -->
+            <fileNamePattern>${LOG_FILE_PATH}/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 보관할 최대 파일 개수 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} [%thread] %highlight(%-5level){TRACE=blue,DEBUG=green,INFO=cyan,WARN=yellow,ERROR=red} %clr(%logger{36}){magenta} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 특정 패키지의 로그 레벨 설정 -->
+    <logger name="org.apache.coyote.http11" level="INFO" />
+    <logger name="org.apache.tomcat.util.net" level="INFO" />
+    <logger name="org.apache.tomcat" level="INFO" />
+
+    <!-- 루트 로거 설정 -->
+    <root level="INFO">
+        <appender-ref ref="console" />
+        <appender-ref ref="file" />
+    </root>
+
+</configuration>
