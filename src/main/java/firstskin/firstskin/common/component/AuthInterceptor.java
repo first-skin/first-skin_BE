@@ -66,6 +66,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         String requestURI = request.getRequestURI();
         HttpMethod method = HttpMethod.fromString(request.getMethod());
 
+        // 권한 체크 예외
+        if (isUrlExcluded(requestURI, method)) {
+            return true;
+        }
+
         if (method == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "유효하지 않은 HTTP 메서드입니다.");
             return false;
@@ -89,5 +94,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    private boolean isUrlExcluded(String requestURI, HttpMethod method) {
+        return "/api/admin/login".equals(requestURI) && method == POST;
     }
 }
