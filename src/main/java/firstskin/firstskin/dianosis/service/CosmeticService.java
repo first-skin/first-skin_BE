@@ -45,19 +45,18 @@ public class CosmeticService {
     public CosmeticPageResponse searchCosmetics(CosmeticRequest request) throws JsonProcessingException {
 
         ResponseEntity<String> exchange = getStringResponseEntity(request);
-//        log.info("네이버 쇼핑 API 응답 === {}", exchange.getBody());
 
         // DTO로 변환
         JsonNode jsonNode = objectMapper.readTree(exchange.getBody());
         JsonNode items = jsonNode.path("items");
 
-        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items.toString(), new TypeReference<>() {
+        List<CosmeticResponse> cosmeticResponses = objectMapper.readValue(items
+                .toString(), new TypeReference<>() {
         });
 
         cosmeticResponses
-                .forEach(cosmeticResponse -> {
-                    cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
-                });
+                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository
+                        .findAvgScoreByProductId(cosmeticResponse.getProductId())));
 
         return CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
@@ -106,9 +105,7 @@ public class CosmeticService {
         });
 
         cosmeticResponses
-                .forEach(cosmeticResponse -> {
-                    cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
-                });
+                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId())));
 
         return CosmeticPageResponse.builder()
                 .total(objectMapper.readTree(exchange.getBody()).path("total").asLong())
