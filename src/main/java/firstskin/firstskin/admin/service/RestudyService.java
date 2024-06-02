@@ -20,13 +20,15 @@ public class RestudyService {
     private String restudyPath;
 
     public RestudyResponse restudy(RestudyRequest request) {
-        log.info("{} 재학습 시작, 모델 경로: {}, df 경로: {}", request.getKind(), request.getModelPath(), request.getDfPath());
+        log.info("{} 재학습 시작, 모델 경로: {}, df 경로: {}",
+                request.getKind(), request.getModelPath(), request.getDfPath());
 
         List<String> lastTwoLines = new LinkedList<>();
         StringBuilder completeLog = new StringBuilder();
 
         try {
-            ProcessBuilder pb = new ProcessBuilder("python3", restudyPath, request.getModelPath(), request.getDfPath(), request.getKind().toString());
+            ProcessBuilder pb = new ProcessBuilder("python3", restudyPath,
+                    request.getModelPath(), request.getDfPath(), request.getKind().toString());
             pb.redirectErrorStream(true);
 
             log.info("재학습 명령어: {}", pb.command());
