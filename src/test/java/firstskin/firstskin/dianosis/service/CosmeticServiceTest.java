@@ -62,4 +62,15 @@ class CosmeticServiceTest {
 
     }
 
+    @Test
+    @DisplayName("화장품 검색 결과 테스트")
+    public void searchCosmetics() throws Exception{
+        //given
+
+        //when
+
+        //then
+
+    }
+
 }

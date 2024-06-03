@@ -54,9 +54,11 @@ public class CosmeticService {
                 .toString(), new TypeReference<>() {
         });
 
-        cosmeticResponses
-                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository
-                        .findAvgScoreByProductId(cosmeticResponse.getProductId())));
+        cosmeticResponses.forEach(cosmeticResponse -> {
+            // <b> 태그 제거
+            cosmeticResponse.setTitle(removeBoldTags(cosmeticResponse.getTitle()));
+            cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
+        });
 
         return CosmeticPageResponse.builder()
                 .total(jsonNode.path("total").asLong())
@@ -105,7 +107,10 @@ public class CosmeticService {
         });
 
         cosmeticResponses
-                .forEach(cosmeticResponse -> cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId())));
+                .forEach(cosmeticResponse -> {
+                    cosmeticResponse.setTitle(removeBoldTags(cosmeticResponse.getTitle()));
+                    cosmeticResponse.setScore(reviewRepository.findAvgScoreByProductId(cosmeticResponse.getProductId()));
+                });
 
         return CosmeticPageResponse.builder()
                 .total(objectMapper.readTree(exchange.getBody()).path("total").asLong())
@@ -164,5 +169,9 @@ public class CosmeticService {
     public PersonalResult getPersonalResults(Long memberId) {
         Member member = memberRepository.findById(memberId).orElseThrow(UserNotFound::new);
         return memberRepository.getPersonalResults(member);
+    }
+
+    private String removeBoldTags(String input) {
+        return input.replaceAll("</?b>", "");
     }
 }
