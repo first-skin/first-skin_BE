@@ -1,5 +1,6 @@
 package firstskin.firstskin.common.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,9 @@ import java.nio.file.Paths;
 
 @RestController
 public class FileController {
+
+    @Value("${file.app}")
+    private String appPath;
 
     @GetMapping("/api/files")
     public ResponseEntity<Resource> serveFile(@RequestParam String path) {
@@ -41,5 +45,23 @@ public class FileController {
             return ResponseEntity.notFound().build();
         }
 
+    }
+
+    @GetMapping("/api/apk")
+    public ResponseEntity<Resource> downloadApk() {
+        try {
+            Path filePath = Paths.get(appPath);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"app-release.apk\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
