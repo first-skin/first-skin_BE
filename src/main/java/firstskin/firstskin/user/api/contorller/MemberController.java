@@ -1,5 +1,6 @@
 package firstskin.firstskin.user.api.contorller;
 
+import firstskin.firstskin.common.exception.UserNotFound;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.model.KakaoProfile;
 import firstskin.firstskin.model.OauthToken;
@@ -14,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 import static firstskin.firstskin.member.domain.Role.ROLE_USER;
 
@@ -107,10 +107,14 @@ public class MemberController {
         return new ResponseEntity<>(members, HttpStatus.OK);
     }
 
-    @GetMapping("/members/{memberId}")
-    public ResponseEntity<Optional<MemberDto>> getMember(@PathVariable Long memberId) {
-        Optional<MemberDto> member = memberService.getMemberById(memberId);
-        return ResponseEntity.status(HttpStatus.OK).body(member);
+    @GetMapping("/members/me")
+    public ResponseEntity<MemberDto> getMember(HttpSession session) {
+        Long memberId = (Long) session.getAttribute("memberId");
+        if (memberId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        MemberDto memberDto = memberService.getMemberById(memberId).orElseThrow(UserNotFound::new);
+        return ResponseEntity.ok(memberDto);
     }
 
     @PutMapping("/members/{memberId}")

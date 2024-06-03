@@ -2,6 +2,7 @@ package firstskin.firstskin.admin.api.controller;
 
 import firstskin.firstskin.admin.api.dto.response.MemberResponse;
 import firstskin.firstskin.admin.service.AdminMemberService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,7 @@ public class AdminMemberController {
     private final AdminMemberService adminMemberService;
 
     @GetMapping
-    public Page<MemberResponse> getMembers(Pageable pageable) {
+    public Page<MemberResponse> getMembers(Pageable pageable, HttpServletRequest request) {
         return adminMemberService.getMembers(pageable);
     }
 

@@ -4,6 +4,7 @@ import firstskin.firstskin.admin.api.dto.request.RestudyRequest;
 import firstskin.firstskin.admin.api.dto.response.RestudyResponse;
 import firstskin.firstskin.admin.service.RestudyService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +22,7 @@ public class RestudyController {
 
     @PostMapping
     @Operation(summary = "재학습")
-    public RestudyResponse restudy(@RequestBody RestudyRequest request) {
+    public RestudyResponse restudy(@RequestBody RestudyRequest request, HttpServletRequest httpServletRequest) {
 
         return restudyService.restudy(request);
     }
