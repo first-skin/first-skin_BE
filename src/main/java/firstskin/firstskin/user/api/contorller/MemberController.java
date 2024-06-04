@@ -64,8 +64,10 @@ public class MemberController {
         if (isAuthenticated) {
             Member member = memberService.findMemberByUserId(userId);
             HttpSession session = memberService.sessionSave(request, member);
+            log.info("Admin login. userId: {}", userId);
             return "Admin login successful. Session ID: " + session.getId();
         } else {
+            log.error("Admin login failed. userId: {}", userId);
             return "Invalid user ID or password";
         }
     }

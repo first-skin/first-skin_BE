@@ -6,6 +6,7 @@ import firstskin.firstskin.common.constants.DfPath;
 import firstskin.firstskin.common.constants.Operation;
 import firstskin.firstskin.common.exception.FileNotFound;
 import firstskin.firstskin.common.exception.MissMatchType;
+import firstskin.firstskin.common.exception.PythonScriptException;
 import firstskin.firstskin.common.exception.UserNotFound;
 import firstskin.firstskin.dianosis.DiagnosisRepository;
 import firstskin.firstskin.dianosis.api.request.DiagnosisDto;
@@ -134,16 +135,18 @@ public class DiagnosisService {
 
             // 얼굴 인식 및 퍼스널 컬러 코드 추출
             int[][] hsvArrayInt = new int[1][9];
-            double[][] hsvArray = detectFaceForPersonalColor(filePath);
+            double[][][] hsvArray = detectFaceForPersonalColor(filePath);
+
+            log.info("hsvArray: {}", Arrays.deepToString(hsvArray));
 
             // double[][] -> int[] 변환
             for (int i = 0; i < 9; i++) {
-                hsvArrayInt[0][i] = (int) hsvArray[0][i];
+                hsvArrayInt[0][i] = (int) hsvArray[0][0][i];
             }
 
             // 퍼스널 컬러 모델 진단
             result = (TFloat32) personalColorModel.session().runner()
-                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArrayInt).shape()))
+                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArray[1]).shape()))
                     .fetch(Operation.PERSONAL_COLOR_OUTPUT)
                     .run().get(0);
 
@@ -185,7 +188,8 @@ public class DiagnosisService {
         return resultArray;
     }
 
-    private double[][] detectFaceForPersonalColor(String filePath) throws Exception {
+    private double[][][] detectFaceForPersonalColor(String filePath) throws Exception {
+        log.info("얼굴 인식 시작");
         ProcessBuilder pb = new ProcessBuilder("python3", detectFacePythonPath, filePath);
         pb.redirectErrorStream(true);
 
@@ -198,21 +202,26 @@ public class DiagnosisService {
                 output.append(line);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("얼굴 인식 실패");
+            throw new PythonScriptException("얼굴인식 실패");
         }
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("Python script execution failed with exit code: " + exitCode);
+            log.error("파이썬 에러 로그" + output);
+            throw new PythonScriptException("Python script execution failed with exit code: " + exitCode);
         }
 
         String jsonOutput = output.toString();
+        log.info("얼굴 인식 결과: {}", jsonOutput);
         return parseJsonTo2DArray(jsonOutput);
     }
 
-    private static double[][] parseJsonTo2DArray(String json) throws Exception {
+    private static double[][][] parseJsonTo2DArray(String json) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(json, double[][].class);
+        double[][][] doubles = objectMapper.readValue(json, double[][][].class);
+        log.info("얼굴 인식 결과Json 변환: {}", Arrays.deepToString(doubles));
+        return doubles;
     }
 
     private void whiteBalance(String filePath) throws IOException, InterruptedException {
