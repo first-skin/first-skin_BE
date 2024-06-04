@@ -56,6 +56,7 @@ public class FileController {
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"app-release.apk\"")
+                        .header(HttpHeaders.CONTENT_TYPE, "application/vnd.android.package-archive")
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();

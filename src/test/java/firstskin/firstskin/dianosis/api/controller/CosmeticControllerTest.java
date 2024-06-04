@@ -115,4 +115,38 @@ class CosmeticControllerTest {
                 .andDo(MockMvcResultHandlers.print());
     }
 
+    @Test
+    @DisplayName("개인별 result 테스트")
+    @Transactional
+    public void searchPersonalResults() throws Exception{
+        Member member = new Member(Role.ROLE_USER, "프로필이미지", "윺저아이디", "니그네임");
+        Member member1 = new Member(Role.ROLE_USER, "프로필이미지", "유저아이디", "닉네임");
+        memberRepository.save(member1);
+
+        Skin skin = new Skin(Kind.TYPE, "oily");
+
+        Skin savedSkin = skinRepository.save(skin);
+        Member savedMember = memberRepository.save(member);
+
+        Diagnosis build = Diagnosis.builder()
+                .member(savedMember)
+                .skin(savedSkin)
+                .skinPictureUrl("https://naver.com")
+                .build();
+        Diagnosis saveDiagnosis = diagnosisRepository.save(build);
+
+        Review 좋아용 = new Review(savedMember, 82730935242L, "좋아용", 4, true);
+        Review 좋아용1 = new Review(savedMember, 82730935242L, "좋아용", 3, true);
+
+        reviewRepository.save(좋아용);
+        reviewRepository.save(좋아용1);
+        //when
+
+        //then
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/cosmetics/personal/results")
+                        .sessionAttr("memberId", savedMember.getMemberId())
+                        .sessionAttr("role", savedMember.getRole()))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk());
+    }
 }
