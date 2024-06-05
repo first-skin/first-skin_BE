@@ -9,7 +9,7 @@ public class Operation {
 
     public static final String TYPE_OUTPUT = "StatefulPartitionedCall:0";
 
-    public static final String TROUBLE_INPUT = "serving_default_input_5";
+    public static final String TROUBLE_INPUT = "serving_default_input_2";
 
     public static final String TROUBLE_OUTPUT = "StatefulPartitionedCall:0";
 

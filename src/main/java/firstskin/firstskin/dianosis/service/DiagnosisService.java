@@ -89,6 +89,10 @@ public class DiagnosisService {
 
     public DiagnosisResponse diagnosisSkin(DiagnosisDto request) throws Exception {
 
+        log.info("진단 시작");
+        log.info("진단 종류: {}", request.getKind());
+        log.info("진단할 파일: {}", request.getFile().getOriginalFilename());
+        log.info("진단할 회원: {}", request.getMemberId());
         String filePath = saveFile(request);
 
         BufferedImage img = ImageIO.read(Paths.get(filePath).toFile());
@@ -101,6 +105,7 @@ public class DiagnosisService {
 
         if (request.getKind().equals(Kind.TYPE)) {
             // 피부 타입 진단
+            log.info("피부 타입 진단 시작");
             result = (TFloat32) typeModel.session().runner()
                     .feed(Operation.TYPE_INPUT, preprocessedImage)
                     .fetch(Operation.TYPE_OUTPUT)
@@ -115,21 +120,27 @@ public class DiagnosisService {
 
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
+            log.info("피부 트러블 진단 시작");
             result = (TFloat32) troubleModel.session().runner()
                     .feed(Operation.TROUBLE_INPUT, preprocessedImage)
                     .fetch(Operation.TROUBLE_OUTPUT)
                     .run().get(0);
 
+            log.info("Trouble model output1r: {}", result);
+            log.info("Trouble model output2r: {}", result.shape());
             float[] resultArray = getFloats(result, 3);
 
             int maxIndex = argMax(resultArray);
             resultLabel = troubleLabels[maxIndex];
 
+            log.info("Trouble model output: {}", Arrays.toString(resultArray));
+
+
             updateTroubleCsvFile(maxIndex, filePath);
 
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
             // 퍼스널 컬러 진단
-
+            log.info("퍼스널 컬러 진단 시작");
             // 화이트 밸런스 조정
             whiteBalance(filePath);
 
@@ -182,9 +193,17 @@ public class DiagnosisService {
     private static float[] getFloats(TFloat32 result, int x) {
         FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
 
+        log.info("floatNdArray: {}", floatNdArray.shape());
+        log.info("floatNdArray: {}", floatNdArray);
+
         result.copyTo(floatNdArray);
         float[] resultArray = new float[x];
-        floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+        floatNdArray.scalars().forEachIndexed((idx, flt) -> {
+            log.info("idx: {}", idx);
+            log.info("resultArray: {}", flt.getFloat());
+                    resultArray[(int) idx[1]] = flt.getFloat();
+                }
+        );
         return resultArray;
     }
 
@@ -294,6 +313,7 @@ public class DiagnosisService {
     // 이미지 전처리
 
     private TFloat32 preprocessImage(BufferedImage img) {
+        log.info("이미지 전처리 시작");
         int width = 224;
         int height = 224;
 
@@ -350,6 +370,7 @@ public class DiagnosisService {
                 }
             }
         }
+        log.info("이미지 전처리 완료");
 
         // 배열을 TFloat32 텐서로 변환합니다.
         return TFloat32.tensorOf(StdArrays.ndCopyOf(imageArray));

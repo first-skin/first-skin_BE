@@ -86,13 +86,40 @@ class DiagnosisServiceTest {
         Member member = new Member(ROLE_USER, "profile", "user", "nick");
         Member savedMember = memberRepository.save(member);
 
-        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/trouble.png");
+        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/tttt.jpeg");
+//        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/dry.png");
+//        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/personal_color.png");
+//        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/trouble.png");
+//        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/oily.png");
         //when
         DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TROUBLE, pngMockMultipartFile);
 
         DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
 
         //then
-        Assertions.assertThat(response.getResult()).isEqualTo("acne");
+        Assertions.assertThat(response.getResult()).isEqualTo("normal");
+    }
+
+    @Test
+    @DisplayName("타입 진단을 수행하면 결과가 반환된다.")
+    @Transactional
+    public void diagnosisType() throws Exception{
+        //given
+        skinRepository.save(new Skin(Kind.TYPE, "oily"));
+        skinRepository.save(new Skin(Kind.TYPE, "normal"));
+        skinRepository.save(new Skin(Kind.TYPE, "dry"));
+
+        Member member = new Member(ROLE_USER, "profile", "user", "nick");
+        Member savedMember = memberRepository.save(member);
+
+        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/tttt.jpeg");
+        //when
+        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TYPE, pngMockMultipartFile);
+
+        DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
+        System.out.println("response.getResult() = " + response.getResult());
+
+        //then
+        Assertions.assertThat(response.getResult()).isEqualTo("normal");
     }
 }
