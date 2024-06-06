@@ -52,8 +52,8 @@ import java.util.UUID;
 @Slf4j
 public class DiagnosisService {
 
-    private final String[] typeLabels = {"dry", "normal", "oily"};
-    private final String[] troubleLabels = {"normal", "acne", "redness"};
+    private final String[] typeLabels = {"dry", "typenormal", "oily"};
+    private final String[] troubleLabels = {"troublenormal", "acne", "redness"};
 
     private final String[] personalColorLabels = {"fall", "spring", "summer", "winter"};
 
@@ -177,7 +177,7 @@ public class DiagnosisService {
                 .orElseThrow(() -> new UserNotFound(request.getMemberId() + " 회원을 찾을 수 없음"));
 
         String finalResultLabel = resultLabel;
-        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(finalResultLabel + " is not found"));
+        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new UserNotFound(finalResultLabel + " is not found"));
 
         Diagnosis diagnosisResult = Diagnosis.builder()
                 .member(findMember)

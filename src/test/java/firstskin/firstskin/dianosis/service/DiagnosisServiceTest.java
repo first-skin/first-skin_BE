@@ -80,7 +80,7 @@ class DiagnosisServiceTest {
     public void diagnosisTrouble() throws Exception{
         //given
         skinRepository.save(new Skin(Kind.TROUBLE, "acne"));
-        skinRepository.save(new Skin(Kind.TROUBLE, "normal"));
+        skinRepository.save(new Skin(Kind.TROUBLE, "troublenormal"));
         skinRepository.save(new Skin(Kind.TROUBLE, "redness"));
 
         Member member = new Member(ROLE_USER, "profile", "user", "nick");
@@ -97,7 +97,7 @@ class DiagnosisServiceTest {
         DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
 
         //then
-        Assertions.assertThat(response.getResult()).isEqualTo("normal");
+        Assertions.assertThat(response.getResult()).isEqualTo("troublenormal");
     }
 
     @Test
@@ -106,8 +106,9 @@ class DiagnosisServiceTest {
     public void diagnosisType() throws Exception{
         //given
         skinRepository.save(new Skin(Kind.TYPE, "oily"));
-        skinRepository.save(new Skin(Kind.TYPE, "normal"));
+        skinRepository.save(new Skin(Kind.TYPE, "typenormal"));
         skinRepository.save(new Skin(Kind.TYPE, "dry"));
+        skinRepository.save(new Skin(Kind.TROUBLE, "troublenormal"));
 
         Member member = new Member(ROLE_USER, "profile", "user", "nick");
         Member savedMember = memberRepository.save(member);
@@ -120,6 +121,6 @@ class DiagnosisServiceTest {
         System.out.println("response.getResult() = " + response.getResult());
 
         //then
-        Assertions.assertThat(response.getResult()).isEqualTo("normal");
+        Assertions.assertThat(response.getResult()).isEqualTo("typenormal");
     }
 }
