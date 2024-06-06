@@ -95,6 +95,7 @@ public class MemberController {
     public ResponseEntity<String> logoutAdmin(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
+            log.info("관리자 로그아웃 memberId: {}", session.getAttribute("memberId"));
             session.invalidate();
             return ResponseEntity.status(HttpStatus.OK).body("Logged-out-successfully");
         } else {
@@ -115,6 +116,7 @@ public class MemberController {
         if (memberId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
+        log.info("내 정보 조회 memberId: {}", memberId);
         MemberDto memberDto = memberService.getMemberById(memberId).orElseThrow(UserNotFound::new);
         return ResponseEntity.ok(memberDto);
     }

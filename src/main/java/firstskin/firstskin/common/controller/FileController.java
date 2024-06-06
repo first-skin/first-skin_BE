@@ -1,5 +1,6 @@
 package firstskin.firstskin.common.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
+@Slf4j
 public class FileController {
 
     @Value("${file.app}")
@@ -54,6 +56,7 @@ public class FileController {
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() || resource.isReadable()) {
+                log.info("APK 파일 다운로드");
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"app-release.apk\"")
                         .header(HttpHeaders.CONTENT_TYPE, "application/vnd.android.package-archive")

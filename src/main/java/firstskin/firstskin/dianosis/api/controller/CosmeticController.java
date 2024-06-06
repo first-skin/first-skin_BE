@@ -43,7 +43,7 @@ public class CosmeticController {
             throw new UnauthorizedException("로그인이 필요합니다.");
         }
 
-        log.info("화장품 검색 memberId : {}", memberId);
+        log.info("커스텀 화장품 검색 memberId : {}", memberId);
         return cosmeticService.searchPersonalCosmetics(memberId, request);
 
     }
@@ -60,6 +60,8 @@ public class CosmeticController {
         if (memberId == null) {
             throw new UnauthorizedException("로그인이 필요합니다.");
         }
+
+        log.info("개인별 진단 결과 조회 memberId : {}", memberId);
 
         return cosmeticService.getPersonalResults(memberId);
     }

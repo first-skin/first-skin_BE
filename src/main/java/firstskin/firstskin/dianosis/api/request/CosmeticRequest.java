@@ -4,11 +4,13 @@ import firstskin.firstskin.skin.Kind;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import static firstskin.firstskin.skin.Kind.PERSONAL_COLOR;
 
 @Getter
 @ToString
+@Slf4j
 public class CosmeticRequest {
 
     private final String query;
@@ -19,6 +21,7 @@ public class CosmeticRequest {
 
     @Builder
     public CosmeticRequest(Kind kind, String category, String query, Integer page, Integer size, String sort) {
+        log.info("화장품 검색 kind : {}, category : {}, query : {}", kind, category, query);
         size = size == null ? 10 : size;
         this.kind = kind;
         String kindName = kind == null ? "" : kind.getDescription() + ":";
