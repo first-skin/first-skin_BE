@@ -23,4 +23,8 @@ public class CosmeticPersonal {
         this.sort = sort;
         this.start = Math.max((page == null ? 1 : page - 1) * size + 1, 1);
     }
+
+    public void setStart(Integer start) {
+        this.start = start;
+    }
 }

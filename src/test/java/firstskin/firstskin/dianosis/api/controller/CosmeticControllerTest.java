@@ -65,9 +65,11 @@ class CosmeticControllerTest {
 
         Review 좋아용 = new Review(savedMember, 82730935242L, "좋아용", 4, true);
         Review 좋아용1 = new Review(savedMember, 82730935242L, "좋아용", 3, true);
+        Review 좋아용2 = new Review(savedMember, 82730935242L, "좋아용", 3, true);
 
         reviewRepository.save(좋아용);
         reviewRepository.save(좋아용1);
+        reviewRepository.save(좋아용2);
         //when
 
         //then
