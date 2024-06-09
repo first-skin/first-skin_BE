@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import firstskin.firstskin.common.component.ModelPathResolver;
 import firstskin.firstskin.common.constants.DfPath;
 import firstskin.firstskin.common.constants.Operation;
-import firstskin.firstskin.common.exception.FileNotFound;
-import firstskin.firstskin.common.exception.MissMatchType;
-import firstskin.firstskin.common.exception.PythonScriptException;
-import firstskin.firstskin.common.exception.UserNotFound;
+import firstskin.firstskin.common.exception.*;
 import firstskin.firstskin.dianosis.DiagnosisRepository;
 import firstskin.firstskin.dianosis.api.request.DiagnosisDto;
 import firstskin.firstskin.dianosis.api.response.DiagnosisResponse;
@@ -95,8 +92,13 @@ public class DiagnosisService {
         log.info("진단할 회원: {}", request.getMemberId());
         String filePath = saveFile(request);
 
-        BufferedImage img = ImageIO.read(Paths.get(filePath).toFile());
-        TFloat32 preprocessedImage = preprocessImage(img);
+        TFloat32 preprocessedImage = null;
+
+        List<Kind> preprocessKind = Arrays.asList(Kind.TYPE, Kind.TROUBLE);
+        if (preprocessKind.contains(request.getKind())) {
+            BufferedImage img = ImageIO.read(Paths.get(filePath).toFile());
+            preprocessedImage = preprocessImage(img);
+        }
 
         TFloat32 result;
 
@@ -155,6 +157,16 @@ public class DiagnosisService {
                 hsvArrayInt[0][i] = (int) hsvArray[0][0][i];
             }
 
+            // csv 파일에 저장되는 배열
+            log.info("hsvArrayInt: {}", Arrays.deepToString(hsvArrayInt));
+            if (Arrays.stream(hsvArrayInt[0]).allMatch(value -> value == 0)) {
+                log.error("얼굴 인식 실패");
+                throw new FaceNotFound("얼굴 인식에 실패했습니다.");
+            }
+
+            // 모델에 넣는 배열
+            log.info("ScaledHsvArray : {}", Arrays.deepToString(hsvArray[1]));
+
             // 퍼스널 컬러 모델 진단
             result = (TFloat32) personalColorModel.session().runner()
                     .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArray[1]).shape()))
@@ -163,6 +175,7 @@ public class DiagnosisService {
 
             float[] resultArray = getFloats(result, 4);
 
+            log.info("Personal Color model output: {}", Arrays.toString(resultArray));
             int maxIndex = argMax(resultArray);
             resultLabel = personalColorLabels[maxIndex];
 
@@ -199,8 +212,8 @@ public class DiagnosisService {
         result.copyTo(floatNdArray);
         float[] resultArray = new float[x];
         floatNdArray.scalars().forEachIndexed((idx, flt) -> {
-            log.info("idx: {}", idx);
-            log.info("resultArray: {}", flt.getFloat());
+                    log.info("idx: {}", idx);
+                    log.info("resultArray: {}", flt.getFloat());
                     resultArray[(int) idx[1]] = flt.getFloat();
                 }
         );
@@ -296,8 +309,15 @@ public class DiagnosisService {
         Path uploadPath = Paths.get(path.toString(), modifiedFilename);
 
         // 416 * 416 이미지로 변환 및 저장
-        changImageSize(file, uploadPath);
-
+        if(!(request.getKind().equals(Kind.PERSONAL_COLOR))) {
+            changImageSize(file, uploadPath);
+        }else{
+            try {
+                file.transferTo(uploadPath);
+            } catch (IOException e) {
+                throw new FileNotFound("이미지 업로드 실패");
+            }
+        }
         return uploadPath.toString();
     }
 
