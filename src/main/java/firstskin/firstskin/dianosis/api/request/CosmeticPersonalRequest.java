@@ -19,7 +19,8 @@ public class CosmeticPersonalRequest {
         type = type == null ? "" : "피부타입: " + type + "%20";
         personalColor = personalColor == null ? "" : personalColor + "%20";
         trouble = trouble == null ? "" : "트러블: " + trouble + "%20";
-        this.query = type + personalColor + trouble + category + "%20화장품";
+        category = category == null || category.isEmpty() ? "" : category + "%20";
+        this.query = type + personalColor + trouble + category + "화장품/미용";
         this.size = size;
         this.sort = sort;
         this.start = start;

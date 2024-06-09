@@ -6,6 +6,7 @@ import firstskin.firstskin.common.constants.DfPath;
 import firstskin.firstskin.common.constants.Operation;
 import firstskin.firstskin.common.exception.FileNotFound;
 import firstskin.firstskin.common.exception.MissMatchType;
+import firstskin.firstskin.common.exception.PythonScriptException;
 import firstskin.firstskin.common.exception.UserNotFound;
 import firstskin.firstskin.dianosis.DiagnosisRepository;
 import firstskin.firstskin.dianosis.api.request.DiagnosisDto;
@@ -51,8 +52,8 @@ import java.util.UUID;
 @Slf4j
 public class DiagnosisService {
 
-    private final String[] typeLabels = {"dry", "normal", "oily"};
-    private final String[] troubleLabels = {"normal", "acne", "redness"};
+    private final String[] typeLabels = {"dry", "typenormal", "oily"};
+    private final String[] troubleLabels = {"troublenormal", "acne", "redness"};
 
     private final String[] personalColorLabels = {"fall", "spring", "summer", "winter"};
 
@@ -88,6 +89,10 @@ public class DiagnosisService {
 
     public DiagnosisResponse diagnosisSkin(DiagnosisDto request) throws Exception {
 
+        log.info("진단 시작");
+        log.info("진단 종류: {}", request.getKind());
+        log.info("진단할 파일: {}", request.getFile().getOriginalFilename());
+        log.info("진단할 회원: {}", request.getMemberId());
         String filePath = saveFile(request);
 
         BufferedImage img = ImageIO.read(Paths.get(filePath).toFile());
@@ -100,6 +105,7 @@ public class DiagnosisService {
 
         if (request.getKind().equals(Kind.TYPE)) {
             // 피부 타입 진단
+            log.info("피부 타입 진단 시작");
             result = (TFloat32) typeModel.session().runner()
                     .feed(Operation.TYPE_INPUT, preprocessedImage)
                     .fetch(Operation.TYPE_OUTPUT)
@@ -114,36 +120,44 @@ public class DiagnosisService {
 
         } else if (request.getKind().equals(Kind.TROUBLE)) {
             // 피부 트러블 진단
+            log.info("피부 트러블 진단 시작");
             result = (TFloat32) troubleModel.session().runner()
                     .feed(Operation.TROUBLE_INPUT, preprocessedImage)
                     .fetch(Operation.TROUBLE_OUTPUT)
                     .run().get(0);
 
+            log.info("Trouble model output1r: {}", result);
+            log.info("Trouble model output2r: {}", result.shape());
             float[] resultArray = getFloats(result, 3);
 
             int maxIndex = argMax(resultArray);
             resultLabel = troubleLabels[maxIndex];
 
+            log.info("Trouble model output: {}", Arrays.toString(resultArray));
+
+
             updateTroubleCsvFile(maxIndex, filePath);
 
         } else if (request.getKind().equals(Kind.PERSONAL_COLOR)) {
             // 퍼스널 컬러 진단
-
+            log.info("퍼스널 컬러 진단 시작");
             // 화이트 밸런스 조정
             whiteBalance(filePath);
 
             // 얼굴 인식 및 퍼스널 컬러 코드 추출
             int[][] hsvArrayInt = new int[1][9];
-            double[][] hsvArray = detectFaceForPersonalColor(filePath);
+            double[][][] hsvArray = detectFaceForPersonalColor(filePath);
+
+            log.info("hsvArray: {}", Arrays.deepToString(hsvArray));
 
             // double[][] -> int[] 변환
             for (int i = 0; i < 9; i++) {
-                hsvArrayInt[0][i] = (int) hsvArray[0][i];
+                hsvArrayInt[0][i] = (int) hsvArray[0][0][i];
             }
 
             // 퍼스널 컬러 모델 진단
             result = (TFloat32) personalColorModel.session().runner()
-                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArrayInt).shape()))
+                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArray[1]).shape()))
                     .fetch(Operation.PERSONAL_COLOR_OUTPUT)
                     .run().get(0);
 
@@ -163,7 +177,7 @@ public class DiagnosisService {
                 .orElseThrow(() -> new UserNotFound(request.getMemberId() + " 회원을 찾을 수 없음"));
 
         String finalResultLabel = resultLabel;
-        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new IllegalStateException(finalResultLabel + " is not found"));
+        Skin findSkin = skinRepository.findByResult(resultLabel).orElseThrow(() -> new UserNotFound(finalResultLabel + " is not found"));
 
         Diagnosis diagnosisResult = Diagnosis.builder()
                 .member(findMember)
@@ -179,13 +193,22 @@ public class DiagnosisService {
     private static float[] getFloats(TFloat32 result, int x) {
         FloatNdArray floatNdArray = NdArrays.ofFloats(result.shape());
 
+        log.info("floatNdArray: {}", floatNdArray.shape());
+        log.info("floatNdArray: {}", floatNdArray);
+
         result.copyTo(floatNdArray);
         float[] resultArray = new float[x];
-        floatNdArray.scalars().forEachIndexed((idx, flt) -> resultArray[(int) idx[1]] = flt.getFloat());
+        floatNdArray.scalars().forEachIndexed((idx, flt) -> {
+            log.info("idx: {}", idx);
+            log.info("resultArray: {}", flt.getFloat());
+                    resultArray[(int) idx[1]] = flt.getFloat();
+                }
+        );
         return resultArray;
     }
 
-    private double[][] detectFaceForPersonalColor(String filePath) throws Exception {
+    private double[][][] detectFaceForPersonalColor(String filePath) throws Exception {
+        log.info("얼굴 인식 시작");
         ProcessBuilder pb = new ProcessBuilder("python3", detectFacePythonPath, filePath);
         pb.redirectErrorStream(true);
 
@@ -198,21 +221,26 @@ public class DiagnosisService {
                 output.append(line);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("얼굴 인식 실패");
+            throw new PythonScriptException("얼굴인식 실패");
         }
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("Python script execution failed with exit code: " + exitCode);
+            log.error("파이썬 에러 로그" + output);
+            throw new PythonScriptException("Python script execution failed with exit code: " + exitCode);
         }
 
         String jsonOutput = output.toString();
+        log.info("얼굴 인식 결과: {}", jsonOutput);
         return parseJsonTo2DArray(jsonOutput);
     }
 
-    private static double[][] parseJsonTo2DArray(String json) throws Exception {
+    private static double[][][] parseJsonTo2DArray(String json) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(json, double[][].class);
+        double[][][] doubles = objectMapper.readValue(json, double[][][].class);
+        log.info("얼굴 인식 결과Json 변환: {}", Arrays.deepToString(doubles));
+        return doubles;
     }
 
     private void whiteBalance(String filePath) throws IOException, InterruptedException {
@@ -285,6 +313,7 @@ public class DiagnosisService {
     // 이미지 전처리
 
     private TFloat32 preprocessImage(BufferedImage img) {
+        log.info("이미지 전처리 시작");
         int width = 224;
         int height = 224;
 
@@ -341,6 +370,7 @@ public class DiagnosisService {
                 }
             }
         }
+        log.info("이미지 전처리 완료");
 
         // 배열을 TFloat32 텐서로 변환합니다.
         return TFloat32.tensorOf(StdArrays.ndCopyOf(imageArray));
