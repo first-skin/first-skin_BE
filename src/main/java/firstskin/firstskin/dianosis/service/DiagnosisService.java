@@ -65,22 +65,28 @@ public class DiagnosisService {
     @Value("${python.white_balance}")
     private String whiteBalancePythonPath;
 
-    @Value("${python.detect_face}")
-    private String detectFacePythonPath;
+    @Value("${python.detect_face_female}")
+    private String detectFemaleFacePythonPath;
+
+    @Value("${python.detect_face_male}")
+    private String detectMaleFacePythonPath;
 
     private SavedModelBundle typeModel;
     private SavedModelBundle troubleModel;
-    private SavedModelBundle personalColorModel;
+    private SavedModelBundle personalColorMaleModel;
+    private SavedModelBundle personalColorFemaleModel;
 
     @PostConstruct
     public void init() {
         String typeModelPath = modelPathResolver.resolveTypeModelPath();
         String troubleModelPath = modelPathResolver.resolveTroubleModelPath();
-        String personalColorModelPath = modelPathResolver.resolvePersonalColorModelPath();
+        String personalColorMaleModelPath = modelPathResolver.resolvePersonalColorMaleModelPath();
+        String personalColorFemaleModelPath = modelPathResolver.resolvePersonalColorFemaleModelPath();
 
         typeModel = SavedModelBundle.load(typeModelPath, "serve");
         troubleModel = SavedModelBundle.load(troubleModelPath, "serve");
-        personalColorModel = SavedModelBundle.load(personalColorModelPath, "serve");
+        personalColorMaleModel = SavedModelBundle.load(personalColorMaleModelPath, "serve");
+        personalColorFemaleModel = SavedModelBundle.load(personalColorFemaleModelPath, "serve");
     }
 
 
@@ -90,6 +96,7 @@ public class DiagnosisService {
         log.info("진단 종류: {}", request.getKind());
         log.info("진단할 파일: {}", request.getFile().getOriginalFilename());
         log.info("진단할 회원: {}", request.getMemberId());
+        log.info("진단할 회원의 성별: {}", request.getSex());
         String filePath = saveFile(request);
 
         TFloat32 preprocessedImage = null;
@@ -148,7 +155,7 @@ public class DiagnosisService {
 
             // 얼굴 인식 및 퍼스널 컬러 코드 추출
             int[][] hsvArrayInt = new int[1][9];
-            double[][][] hsvArray = detectFaceForPersonalColor(filePath);
+            double[][][] hsvArray = detectFaceForPersonalColor(filePath, request.getSex());
 
             log.info("hsvArray: {}", Arrays.deepToString(hsvArray));
 
@@ -167,19 +174,38 @@ public class DiagnosisService {
             // 모델에 넣는 배열
             log.info("ScaledHsvArray : {}", Arrays.deepToString(hsvArray[1]));
 
-            // 퍼스널 컬러 모델 진단
-            result = (TFloat32) personalColorModel.session().runner()
-                    .feed(Operation.PERSONAL_COLOR_INPUT, TFloat32.tensorOf(StdArrays.ndCopyOf(hsvArray[1]).shape()))
-                    .fetch(Operation.PERSONAL_COLOR_OUTPUT)
-                    .run().get(0);
+            float[][] scaledHsvArray = new float[1][9];
+            for (double[][] doubles : hsvArray) {
+                for (int j = 0; j < doubles[0].length; j++) {
+                    scaledHsvArray[0][j] = (float) doubles[0][j];
+                }
+            }
 
+            TFloat32 scaledHsvTensor = TFloat32.tensorOf(StdArrays.ndCopyOf(scaledHsvArray));
+
+            log.info("ScaledHsvTensor : {}", Arrays.deepToString(scaledHsvArray));
+            // 퍼스널 컬러 모델 진단
+
+            if (request.getSex().equals("male")) {
+                result = (TFloat32) personalColorMaleModel.session().runner()
+                        .feed(Operation.PERSONAL_COLOR_MALE_INPUT, scaledHsvTensor)
+                        .fetch(Operation.PERSONAL_COLOR_OUTPUT)
+                        .run().get(0);
+            } else if (request.getSex().equals("female")) {
+                result = (TFloat32) personalColorFemaleModel.session().runner()
+                        .feed(Operation.PERSONAL_COLOR_FEMALE_INPUT, scaledHsvTensor)
+                        .fetch(Operation.PERSONAL_COLOR_OUTPUT)
+                        .run().get(0);
+            } else {
+                throw new BadRequestException("성별을 선택해주세요.");
+            }
             float[] resultArray = getFloats(result, 4);
 
             log.info("Personal Color model output: {}", Arrays.toString(resultArray));
             int maxIndex = argMax(resultArray);
             resultLabel = personalColorLabels[maxIndex];
 
-            updatePersonalColorCsvFile(maxIndex, filePath, hsvArrayInt[0]);
+            updatePersonalColorCsvFile(maxIndex, filePath, hsvArrayInt[0], request.getSex());
 
         } else {
             throw new BadRequestException("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
@@ -220,9 +246,16 @@ public class DiagnosisService {
         return resultArray;
     }
 
-    private double[][][] detectFaceForPersonalColor(String filePath) throws Exception {
+    private double[][][] detectFaceForPersonalColor(String filePath, String sex) throws Exception {
         log.info("얼굴 인식 시작");
-        ProcessBuilder pb = new ProcessBuilder("python3", detectFacePythonPath, filePath);
+        ProcessBuilder pb;
+        if (sex.equals("male")) {
+            pb = new ProcessBuilder("python3", detectMaleFacePythonPath, filePath);
+        } else if (sex.equals("female")) {
+            pb = new ProcessBuilder("python3", detectFemaleFacePythonPath, filePath);
+        } else {
+            throw new BadRequestException("성별을 선택해주세요.");
+        }
         pb.redirectErrorStream(true);
 
         Process process = pb.start();
@@ -287,7 +320,7 @@ public class DiagnosisService {
         }
     }
 
-    private String saveFile(DiagnosisDto request) {
+    private String saveFile(DiagnosisDto request) throws BadRequestException {
 
         if (request.getFile().isEmpty()) {
             throw new FileNotFound("업로드된 파일이 없습니다.");
@@ -302,16 +335,16 @@ public class DiagnosisService {
         String originalFilename = file.getOriginalFilename();
 
         // 달 별로 폴더 없으면 새로 생성
-        Path path = getPath(request.getKind());
+        Path path = getPath(request.getKind(), request.getSex());
         createDirIfNotExist(path);
 
         String modifiedFilename = UUID.randomUUID() + originalFilename;
         Path uploadPath = Paths.get(path.toString(), modifiedFilename);
 
         // 416 * 416 이미지로 변환 및 저장
-        if(!(request.getKind().equals(Kind.PERSONAL_COLOR))) {
+        if (!(request.getKind().equals(Kind.PERSONAL_COLOR))) {
             changImageSize(file, uploadPath);
-        }else{
+        } else {
             try {
                 file.transferTo(uploadPath);
             } catch (IOException e) {
@@ -397,7 +430,7 @@ public class DiagnosisService {
     }
 
 
-    private Path getPath(Kind kind) {
+    private Path getPath(Kind kind, String sex) throws BadRequestException {
         LocalDate now = LocalDate.now();
         String year = String.valueOf(now.getYear());
         String month = String.format("%02d", now.getMonthValue());
@@ -408,7 +441,13 @@ public class DiagnosisService {
         } else if (kind.equals(Kind.TROUBLE)) {
             return Paths.get(uploadDir, "skintrouble", "customers", year, month, day);
         } else if (kind.equals(Kind.PERSONAL_COLOR)) {
-            return Paths.get(uploadDir, "personal_color", "customers", year, month, day);
+            if(sex.equals("male")) {
+                return Paths.get(uploadDir, "personal_color", "male", "customers", year, month, day);
+            } else if (sex.equals("female")) {
+                return Paths.get(uploadDir, "personal_color", "female", "customers", year, month, day);
+            } else {
+                throw new BadRequestException("성별을 선택해주세요.");
+            }
         } else {
             throw new MissMatchType("TROUBLE, TYPE, PERSONAL_COLOR 중 하나를 선택해주세요.");
         }
@@ -448,8 +487,8 @@ public class DiagnosisService {
 
     }
 
-    private void updatePersonalColorCsvFile(int labelIndex, String filePath, int[] hsvArray) {
-        Path csvFile = getPersonalColorCsvFilePath();
+    private void updatePersonalColorCsvFile(int labelIndex, String filePath, int[] hsvArray, String sex) throws BadRequestException {
+        Path csvFile = getPersonalColorCsvFilePath(sex);
 
         isAlreadyExist(labelIndex, filePath, csvFile, hsvArray);
     }
@@ -503,11 +542,17 @@ public class DiagnosisService {
         return Paths.get(uploadDir, DfPath.TROUBLE_PATH);
     }
 
-    private Path getPersonalColorCsvFilePath() {
+    private Path getPersonalColorCsvFilePath(String sex) throws BadRequestException {
         // 폴더가 존재하지 않으면 생성
         personalColorMakeDirIfNotExist();
 
-        return Paths.get(uploadDir, DfPath.PERSONAL_COLOR_PATH);
+        if(sex.equals("male")) {
+            return Paths.get(uploadDir, DfPath.PERSONAL_COLOR_MALE_PATH);
+        } else if (sex.equals("female")) {
+            return Paths.get(uploadDir, DfPath.PERSONAL_COLOR_FEMALE_PATH);
+        }else {
+            throw new BadRequestException("성별을 선택해주세요.");
+        }
     }
 
     private void typeMakeDirIfNotExist() {
@@ -521,8 +566,10 @@ public class DiagnosisService {
     }
 
     private void personalColorMakeDirIfNotExist() {
-        Path path = Paths.get(uploadDir, "personal_color");
-        createDirIfNotExist(path);
+        Path femalePath = Paths.get(uploadDir, "personal_color" + File.separator + "female");
+        Path malePath = Paths.get(uploadDir, "personal_color" + File.separator + "male");
+        createDirIfNotExist(femalePath);
+        createDirIfNotExist(malePath);
     }
 
 }
