@@ -9,5 +9,6 @@ public class DfPath {
 
     public static final String TROUBLE_PATH = "skintrouble/skintrouble_df.csv";
 
-    public static final String PERSONAL_COLOR_PATH = "personal_color/personalcolor_df.csv";
+    public static final String PERSONAL_COLOR_MALE_PATH = "personal_color/male/male_percolor_df.csv";
+    public static final String PERSONAL_COLOR_FEMALE_PATH = "personal_color/female/female_personalcolor_df.csv";
 }

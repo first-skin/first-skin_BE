@@ -54,7 +54,7 @@ class DiagnosisServiceTest {
 
         MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/personal_color.png");
 
-        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.PERSONAL_COLOR, pngMockMultipartFile);
+        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.PERSONAL_COLOR, pngMockMultipartFile, "male");
         //when
         DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
 
@@ -92,7 +92,7 @@ class DiagnosisServiceTest {
 //        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/trouble.png");
 //        MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/oily.png");
         //when
-        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TROUBLE, pngMockMultipartFile);
+        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TROUBLE, pngMockMultipartFile, "male");
 
         DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
 
@@ -115,7 +115,7 @@ class DiagnosisServiceTest {
 
         MockMultipartFile pngMockMultipartFile = getPngMockMultipartFile("src/main/resources/test/tttt.jpeg");
         //when
-        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TYPE, pngMockMultipartFile);
+        DiagnosisDto diagnosisDto = new DiagnosisDto(savedMember.getMemberId(), Kind.TYPE, pngMockMultipartFile, "male");
 
         DiagnosisResponse response = diagnosisService.diagnosisSkin(diagnosisDto);
         System.out.println("response.getResult() = " + response.getResult());

@@ -17,6 +17,14 @@ import java.util.Map;
 @ControllerAdvice
 public class FirstSkinExceptionHandler {
 
+    @ExceptionHandler(FaceNotFound.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Map<String, String>> faceNotFoundException(FaceNotFound e) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(MissMatchType.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, String>> missMatchTypeException(MissMatchType e) {
