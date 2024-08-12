@@ -30,4 +30,8 @@ public class CosmeticResponse {
     public void setScore(Double score) {
         this.score = score;
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }
