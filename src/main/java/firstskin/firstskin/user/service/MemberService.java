@@ -43,6 +43,7 @@ public class MemberService {
         List<Member> adminMembers = memberRepository.findByRole(Role.ROLE_ADMIN);
         for (Member member : adminMembers) {
             if (member.getUserId().equals(userId) && member.getName().equals(password) && member.isActivated()) {
+                log.info("관리자 로그인 성공. userId: {}", userId);
                 return true;
             }
         }

@@ -33,10 +33,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         //진단
         addUri("/api/skin/diagnosis", POST, ROLE_USER)
                 //관리자
-                .addUri("/api/admin", GET, ROLE_ADMIN)
-                .addUri("/api/admin", POST, ROLE_ADMIN)
-                .addUri("/api/admin", DELETE, ROLE_ADMIN)
-                .addUri("/api/admin", PUT, ROLE_ADMIN)
+//                .addUri("/api/admin", GET, ROLE_ADMIN)
+//                .addUri("/api/admin", POST, ROLE_ADMIN)
+//                .addUri("/api/admin", DELETE, ROLE_ADMIN)
+//                .addUri("/api/admin", PUT, ROLE_ADMIN)
                 // 유저 정보 수정
                 .addUri("/api/members", PUT, ROLE_ADMIN)
                 .addUri("/api/members", PUT, ROLE_USER)

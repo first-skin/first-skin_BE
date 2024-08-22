@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static firstskin.firstskin.member.domain.Role.ROLE_ADMIN;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -90,7 +91,8 @@ class CategoryControllerTest {
         //expected
         mockMvc.perform(delete("/api/admin/category/{categoryId}", category.getCategoryId())
                         .param("categoryId", String.valueOf(category.getCategoryId()))
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .sessionAttr("role", ROLE_ADMIN))
                 .andExpect(status().isOk())
                 .andDo(print());
 

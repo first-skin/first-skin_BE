@@ -23,8 +23,9 @@ public class RestudyService {
         log.info("{} 재학습 시작, 모델 경로: {}, df 경로: {}",
                 request.getKind(), request.getModelPath(), request.getDfPath());
 
-        List<String> lastTwoLines = new LinkedList<>();
+        List<String> logLines = new LinkedList<>();
         StringBuilder completeLog = new StringBuilder();
+        String modelSavedPath = "";
 
         try {
             ProcessBuilder pb = new ProcessBuilder("python3", restudyPath,
@@ -39,11 +40,12 @@ public class RestudyService {
                 while ((line = br.readLine()) != null) {
                     completeLog.append(line).append("\n");
 
-                    // 마지막 두 줄을 추적
-                    if (lastTwoLines.size() >= 2) {
-                        lastTwoLines.remove(0);
+                    logLines.add(line);
+
+                    // 모델 저장 경로 추출
+                    if (line.contains("Model saved as .pb in: ")) {
+                        modelSavedPath = line.substring(line.indexOf("Model saved as .pb in: ") + 22).trim();
                     }
-                    lastTwoLines.add(line);
                 }
             }
 
@@ -55,31 +57,38 @@ public class RestudyService {
         } catch (IOException | InterruptedException exception) {
             log.error("재학습 실패", exception);
             throw new InternalError("서버 오류로 인한 재학습 실패.");
-        }finally {
+        } finally {
             log.info("재학습 전체 로그: \n{}", completeLog);
             log.info("재학습 종료");
         }
 
-        // 로그의 마지막 두 줄에서 before, after 값을 추출하고 결과 메시지 생성
+        // 로그에서 before, after 값을 추출하고 결과 메시지 생성
         Double before = null;
         Double after = null;
-        String result = "";
+        StringBuilder result = new StringBuilder();
 
-        if (lastTwoLines.size() >= 2) {
+        // 마지막으로 유효한 두 줄을 사용하여 성능 결과를 추출
+        if (logLines.size() >= 2) {
             try {
-                String metricsLine = lastTwoLines.get(0);
-                String resultLine = lastTwoLines.get(1);
-
-                String[] parts = metricsLine.split(",");
-                for (String part : parts) {
-                    if (part.trim().startsWith("before")) {
-                        before = Double.parseDouble(part.split(":")[1].trim());
-                    } else if (part.trim().startsWith("after")) {
-                        after = Double.parseDouble(part.split(":")[1].trim());
+                // 로그의 마지막 두 줄이 성능 평가 결과일 수 있으므로 확인
+                for (String line : logLines) {
+                    if (line.contains("before") && line.contains("after")) {
+                        String[] parts = line.split(",");
+                        for (String part : parts) {
+                            if (part.trim().startsWith("before")) {
+                                before = Double.parseDouble(part.split(":")[1].trim());
+                            } else if (part.trim().startsWith("after")) {
+                                after = Double.parseDouble(part.split(":")[1].trim());
+                            }
+                        }
+                    } else if (line.contains("성능 향상") || line.contains("성능 하락")) {
+                        result = new StringBuilder(line.trim());
+                    }else if (line.contains("Model saved as .pb in: ")){
+                        String[] parts = line.split("/");
+                        result.append(parts[parts.length - 1]);
                     }
                 }
 
-                result = resultLine.trim();
 
             } catch (Exception e) {
                 log.error("로그 파싱 실패", e);
@@ -87,10 +96,12 @@ public class RestudyService {
             }
         }
 
+        log.info("before: {}, after: {}, result: {}", before, after, result.toString());
+
         return RestudyResponse.builder()
                 .before(before)
                 .after(after)
-                .result(result)
+                .result(result.toString())
                 .build();
     }
 }

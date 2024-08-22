@@ -1,5 +1,6 @@
 package firstskin.firstskin.user.api.contorller;
 
+import firstskin.firstskin.common.exception.UserNotFound;
 import firstskin.firstskin.member.domain.Member;
 import firstskin.firstskin.model.KakaoProfile;
 import firstskin.firstskin.model.OauthToken;
@@ -14,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 import static firstskin.firstskin.member.domain.Role.ROLE_USER;
 
@@ -64,8 +64,10 @@ public class MemberController {
         if (isAuthenticated) {
             Member member = memberService.findMemberByUserId(userId);
             HttpSession session = memberService.sessionSave(request, member);
+            log.info("Admin login. userId: {}", userId);
             return "Admin login successful. Session ID: " + session.getId();
         } else {
+            log.error("Admin login failed. userId: {}", userId);
             return "Invalid user ID or password";
         }
     }
@@ -93,6 +95,7 @@ public class MemberController {
     public ResponseEntity<String> logoutAdmin(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
+            log.info("관리자 로그아웃 memberId: {}", session.getAttribute("memberId"));
             session.invalidate();
             return ResponseEntity.status(HttpStatus.OK).body("Logged-out-successfully");
         } else {
@@ -107,10 +110,15 @@ public class MemberController {
         return new ResponseEntity<>(members, HttpStatus.OK);
     }
 
-    @GetMapping("/members/{memberId}")
-    public ResponseEntity<Optional<MemberDto>> getMember(@PathVariable Long memberId) {
-        Optional<MemberDto> member = memberService.getMemberById(memberId);
-        return ResponseEntity.status(HttpStatus.OK).body(member);
+    @GetMapping("/members/me")
+    public ResponseEntity<MemberDto> getMember(HttpSession session) {
+        Long memberId = (Long) session.getAttribute("memberId");
+        if (memberId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        log.info("내 정보 조회 memberId: {}", memberId);
+        MemberDto memberDto = memberService.getMemberById(memberId).orElseThrow(UserNotFound::new);
+        return ResponseEntity.ok(memberDto);
     }
 
     @PutMapping("/members/{memberId}")

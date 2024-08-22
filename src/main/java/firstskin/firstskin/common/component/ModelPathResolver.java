@@ -25,11 +25,17 @@ public class ModelPathResolver {
     @Value("${model.trouble_pattern}")
     private String troublePattern;
 
-    @Value("${model.personal_color}")
-    private String personalColorPath;
+    @Value("${model.personal_color_male}")
+    private String personalColorMalePath;
 
-    @Value("${model.personal_color_pattern}")
-    private String personalColorPattern;
+    @Value("${model.personal_color_male_pattern}")
+    private String personalColorMalePattern;
+
+    @Value("${model.personal_color_female}")
+    private String personalColorFemalePath;
+
+    @Value("${model.personal_color_female_pattern}")
+    private String personalColorFemalePattern;
 
 
     public String resolveModelPath(String basePath, String pattern) {
@@ -54,7 +60,10 @@ public class ModelPathResolver {
         return resolveModelPath(troublePath, troublePattern);
     }
 
-    public String resolvePersonalColorModelPath() {
-        return resolveModelPath(personalColorPath, personalColorPattern);
+    public String resolvePersonalColorMaleModelPath() {
+        return resolveModelPath(personalColorMalePath, personalColorMalePattern);
+    }
+    public String resolvePersonalColorFemaleModelPath() {
+        return resolveModelPath(personalColorFemalePath, personalColorFemalePattern);
     }
 }
